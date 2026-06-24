@@ -29,7 +29,7 @@ import {
 	type CalendarNavigationSlice,
 	useCalendarNavigation,
 } from '@/features/calendar/hooks/use-calendar-navigation'
-import type { CellInfo } from '@/features/calendar/types'
+import type { CellInfo, DateRange } from '@/features/calendar/types'
 import { createPluginRuntime } from '@/features/plugins/lib/create-plugin-runtime'
 import { getEventResourceIds } from '@/lib/events/pipeline'
 import type { Translations, TranslatorFunction } from '@/lib/translations/types'
@@ -65,6 +65,7 @@ interface CalendarEngineConfig {
 	resources?: Resource[]
 	orientation?: 'horizontal' | 'vertical'
 	weekViewGranularity?: 'hourly' | 'daily'
+	resourceTimelineRange?: DateRange
 }
 
 /**
@@ -125,6 +126,7 @@ export const useCalendarEngine = (
 		resources,
 		orientation,
 		weekViewGranularity,
+		resourceTimelineRange,
 	} = config
 
 	const { plugins = EMPTY_PLUGINS } = config
@@ -153,6 +155,7 @@ export const useCalendarEngine = (
 		onDateChange,
 		onViewChange,
 		pluginRuntime,
+		resourceTimelineRange,
 	})
 
 	const data = useCalendarData({

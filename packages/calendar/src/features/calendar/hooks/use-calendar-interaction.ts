@@ -32,6 +32,8 @@ export interface CalendarInteractionSlice {
 	closeEventForm: () => void
 	handleEventClick: (event: CalendarEvent) => void
 	handleDateClick: (info: CellInfo) => void
+	isResourceGroupCollapsed: (groupId: string | number) => boolean
+	toggleResourceGroup: (groupId: string | number) => void
 }
 
 /** Interaction slice: selection state and the event form lifecycle. */
@@ -46,6 +48,28 @@ export const useCalendarInteraction = ({
 	const [isEventFormOpen, setIsEventFormOpen] = useState(false)
 	const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
 	const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null)
+	const [collapsedResourceGroups, setCollapsedResourceGroups] = useState<
+		Set<string>
+	>(() => new Set())
+
+	const isResourceGroupCollapsed = useCallback(
+		(groupId: string | number) =>
+			collapsedResourceGroups.has(String(groupId)),
+		[collapsedResourceGroups]
+	)
+
+	const toggleResourceGroup = useCallback((groupId: string | number) => {
+		const key = String(groupId)
+		setCollapsedResourceGroups((prev) => {
+			const next = new Set(prev)
+			if (next.has(key)) {
+				next.delete(key)
+			} else {
+				next.add(key)
+			}
+			return next
+		})
+	}, [])
 
 	const openEventForm = useCallback(
 		(eventData: OpenEventFormInput = {}) => {
@@ -122,6 +146,8 @@ export const useCalendarInteraction = ({
 			closeEventForm,
 			handleEventClick,
 			handleDateClick,
+			isResourceGroupCollapsed,
+			toggleResourceGroup,
 		}),
 		[
 			isEventFormOpen,
@@ -131,6 +157,8 @@ export const useCalendarInteraction = ({
 			closeEventForm,
 			handleEventClick,
 			handleDateClick,
+			isResourceGroupCollapsed,
+			toggleResourceGroup,
 		]
 	)
 }

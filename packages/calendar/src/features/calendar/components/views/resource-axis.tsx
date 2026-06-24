@@ -1,4 +1,5 @@
 import type {
+	HorizontalCellSpec,
 	HorizontalRowSpec,
 	Resource,
 	VerticalColumnSpec,
@@ -28,17 +29,12 @@ interface ResourceHorizontalRowsOptions {
 	cellClassName?: string
 }
 
-/**
- * Horizontal arrangement of the resource axis: one row per resource over the
- * same date cells (resources as rows, time flows across).
- */
-export const resourceHorizontalRows = ({
-	resources,
-	days,
-	gridType,
-	cellClassName,
-}: ResourceHorizontalRowsOptions): HorizontalRowSpec[] => {
-	const columns = days.map((day) => {
+const buildDayColumns = (
+	days: Dayjs[] | Dayjs[][],
+	gridType: 'day' | 'hour',
+	cellClassName?: string
+): HorizontalCellSpec[] =>
+	days.map((day) => {
 		const isArray = Array.isArray(day)
 		const refDay = isArray ? day.at(0) : day
 		return {
@@ -50,11 +46,57 @@ export const resourceHorizontalRows = ({
 		}
 	})
 
-	return resources.map((resource) => ({
-		id: String(resource.id),
-		resource,
-		columns,
-	}))
+/**
+ * Builds horizontal resource rows, inserting collapsible group header rows
+ * before the first resource in each `groupId` cluster.
+ */
+export const buildGroupedResourceRows = (
+	resources: Resource[],
+	columns: HorizontalCellSpec[]
+): HorizontalRowSpec[] => {
+	const rows: HorizontalRowSpec[] = []
+	const insertedGroups = new Set<string>()
+
+	for (const resource of resources) {
+		if (resource.groupId != null) {
+			const groupKey = String(resource.groupId)
+			if (!insertedGroups.has(groupKey)) {
+				insertedGroups.add(groupKey)
+				rows.push({
+					id: keys.resourceGroup.header(resource.groupId),
+					rowKind: 'group-header',
+					resourceGroup: {
+						id: resource.groupId,
+						title: resource.groupTitle ?? groupKey,
+					},
+					columns,
+				})
+			}
+		}
+
+		rows.push({
+			id: String(resource.id),
+			rowKind: 'resource',
+			resource,
+			columns,
+		})
+	}
+
+	return rows
+}
+
+/**
+ * Horizontal arrangement of the resource axis: one row per resource over the
+ * same date cells (resources as rows, time flows across).
+ */
+export const resourceHorizontalRows = ({
+	resources,
+	days,
+	gridType,
+	cellClassName,
+}: ResourceHorizontalRowsOptions): HorizontalRowSpec[] => {
+	const columns = buildDayColumns(days, gridType, cellClassName)
+	return buildGroupedResourceRows(resources, columns)
 }
 
 /** Column spec(s) for one resource; `resourceVerticalColumns` attaches the resource. */

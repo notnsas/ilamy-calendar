@@ -55,6 +55,11 @@ export interface DateRange {
 	end: Dayjs
 }
 
+export interface IlamyCalendarPropDateRange {
+	start: Dayjs | Date | string
+	end: Dayjs | Date | string
+}
+
 export interface CellInfo {
 	/** Start date/time of the cell */
 	start: Dayjs
@@ -417,4 +422,9 @@ export interface IlamyCalendarProps {
 	 *   mode (non-contiguous days would break multi-day event positioning).
 	 */
 	weekViewGranularity?: 'hourly' | 'daily'
+	/**
+	 * Date window for the resource yearly timeline. Use this for booking seasons
+	 * such as Jan 26 through Nov 1 instead of showing the entire year.
+	 */
+	resourceTimelineRange?: IlamyCalendarPropDateRange
 }

@@ -121,6 +121,16 @@ export interface Resource {
 	 * @example { avatar: 'https://example.com/avatar.png', role: 'admin' }
 	 */
 	data?: Record<string, unknown>
+	/**
+	 * When set, nests this resource under a collapsible group header on the
+	 * resource axis. Resources sharing the same `groupId` are rendered together.
+	 */
+	groupId?: string | number
+	/**
+	 * Display title for the group header. Set on the first resource in a group
+	 * (falls back to the stringified `groupId` when omitted).
+	 */
+	groupTitle?: string
 }
 
 // --- Plugin SDK contract ---------------------------------------------------
@@ -171,6 +181,11 @@ export interface ViewConfig {
 	 * hour slots under each day; 'daily' shows one cell per day.
 	 */
 	weekViewGranularity?: 'hourly' | 'daily'
+	/**
+	 * Optional visible date window for resource timeline views. Consumers can use
+	 * this to show an arbitrary booking season instead of a fixed calendar year.
+	 */
+	resourceTimelineRange?: PluginDateRange
 }
 
 /**
@@ -218,6 +233,10 @@ export interface HorizontalRowSpec {
 	showDayNumber?: boolean
 	/** Resource-axis identity when the row belongs to one resource. */
 	resource?: Resource
+	/** When `'group-header'`, this row is a collapsible resource group label. */
+	rowKind?: 'group-header' | 'resource'
+	/** Group metadata when `rowKind` is `'group-header'`. */
+	resourceGroup?: { id: string | number; title: string }
 }
 
 /** What a view's `columns()` returns; `layout` picks which engine consumes it. */
@@ -266,10 +285,7 @@ export interface PluginView {
 	 * `firstDayOfWeek` slice of the config; the full axis config reaches
 	 * `columns()`/`renderHeader()`.
 	 */
-	range?: (
-		date: Dayjs,
-		config: Pick<ViewConfig, 'firstDayOfWeek'>
-	) => { start: Dayjs; end: Dayjs }
+	range?: (date: Dayjs, config: ViewConfig) => { start: Dayjs; end: Dayjs }
 	/**
 	 * Column/row specs for the shared renderer. Return `VerticalColumnSpec[]`
 	 * when `layout` is 'vertical', `HorizontalRowSpec[]` when 'horizontal'.

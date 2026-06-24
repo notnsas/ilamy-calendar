@@ -6,13 +6,16 @@ import type {
 import { cn } from '@ilamy/ui/lib/utils'
 import type { Dayjs } from '@ilamy/utils/dayjs'
 import type React from 'react'
-import { memo, useMemo } from 'react'
+import { memo, useMemo, useRef } from 'react'
 import { useSmartCalendarContext } from '@/features/calendar/hooks/use-smart-calendar-context'
 import { useProcessedWeekEvents } from '@/features/calendar/hooks/useProcessedWeekEvents'
 import { getDayKey } from '@/lib/utils/date-utils'
 import { keys } from '@/lib/utils/keys'
+import type { SelectedDayEvents } from '../all-events-dialog'
+import { AllEventDialog } from '../all-events-dialog'
 import { GridCell } from '../grid-cell'
 import { ResourceCell } from '../resource-cell'
+import { ResourceGroupHeaderCell } from '../resource-group-header-cell'
 import { HorizontalGridEventsLayer } from './horizontal-grid-events-layer'
 
 interface HorizontalGridColumn extends HorizontalCellSpec {
@@ -31,6 +34,8 @@ export interface HorizontalGridRowProps extends HorizontalRowSpec {
 const NoMemoHorizontalGridRow: React.FC<HorizontalGridRowProps> = ({
 	id,
 	resource,
+	resourceGroup,
+	rowKind = 'resource',
 	gridType = 'day',
 	variant = 'resource',
 	dayNumberHeight,
@@ -40,18 +45,30 @@ const NoMemoHorizontalGridRow: React.FC<HorizontalGridRowProps> = ({
 	showDayNumber = false,
 	isLastRow = false,
 }) => {
-	const { renderResource } = useSmartCalendarContext()
+	const { renderResource, view } = useSmartCalendarContext((ctx) => ({
+		renderResource: ctx.renderResource,
+		view: ctx.view,
+	}))
 
+	const isGroupHeader = rowKind === 'group-header' && resourceGroup != null
 	const isResourceCalendar = variant === 'resource'
+	const isYearResourceView = view === 'resourceYear'
+	const compact = isYearResourceView && !isGroupHeader
 	// Flat columns: each column has col.day (regular month, resource month)
 	// Grouped columns: each column has col.days[] (resource week horizontal)
 	const isGrouped = columns.some((col) => col.days)
 
+	const allEventsDialogRef = useRef<{
+		open: () => void
+		close: () => void
+		setSelectedDayEvents: (dayEvents: SelectedDayEvents) => void
+	}>(null)
+
 	// Collect all days for flat rows
 	const flatDays = useMemo(() => {
-		if (isGrouped) return []
+		if (isGrouped || isGroupHeader) return []
 		return columns.map((col) => col.day).filter((d): d is Dayjs => Boolean(d))
-	}, [columns, isGrouped])
+	}, [columns, isGrouped, isGroupHeader])
 
 	// Compute events once at the row level — shared between GridCells and events layer
 	const { positionedEvents, dayEventsMap } = useProcessedWeekEvents({
@@ -66,7 +83,14 @@ const NoMemoHorizontalGridRow: React.FC<HorizontalGridRowProps> = ({
 			className={cn('flex flex-1 relative min-w-0', className)}
 			data-testid={keys.container.horizontal.row(id)}
 		>
-			{isResourceCalendar && resource && (
+			{isResourceCalendar && isGroupHeader && resourceGroup && (
+				<ResourceGroupHeaderCell
+					className="w-20 sm:w-40"
+					groupId={resourceGroup.id}
+					title={resourceGroup.title}
+				/>
+			)}
+			{isResourceCalendar && !isGroupHeader && resource && (
 				<ResourceCell
 					className="w-20 sm:w-40 sticky left-0 bg-background z-20 h-full"
 					data-testid={keys.container.horizontal.rowLabel(resource.id)}
@@ -81,47 +105,62 @@ const NoMemoHorizontalGridRow: React.FC<HorizontalGridRowProps> = ({
 			)}
 			<div className="relative flex-1 flex min-w-0">
 				<div className="flex w-full min-w-0">
-					{columns.map((col, index) => {
-						if (col.days) {
-							return (
-								<GroupedColumn
-									allDay={allDay}
-									col={col}
-									dayNumberHeight={dayNumberHeight}
-									gridType={gridType}
-									id={id}
-									isLastCol={index === columns.length - 1}
-									isLastRow={isLastRow}
+					{isGroupHeader
+						? columns.map((col, index) => (
+								<div
+									className={cn(
+										'flex-1 w-20 border-r border-b min-h-8 bg-muted/40',
+										isLastRow && 'border-b-0',
+										col.className
+									)}
 									key={col.id}
-									resource={resource}
-									resourceId={resource?.id}
-									showDayNumber={showDayNumber}
 								/>
-							)
-						}
+							))
+						: columns.map((col, index) => {
+								if (col.days) {
+									return (
+										<GroupedColumn
+											allDay={allDay}
+											col={col}
+											compact={compact}
+											dayNumberHeight={dayNumberHeight}
+											gridType={gridType}
+											id={id}
+											isLastCol={index === columns.length - 1}
+											isLastRow={isLastRow}
+											key={col.id}
+											resource={resource}
+											resourceId={resource?.id}
+											showDayNumber={showDayNumber}
+										/>
+									)
+								}
 
-						return col.day ? (
-							<GridCell
-								allDay={allDay}
-								className={cn(
-									'flex-1 w-20',
-									isLastRow && 'border-b-0',
-									col.className
-								)}
-								day={col.day}
-								gridType={gridType}
-								hour={gridType === 'hour' ? col.day.hour() : undefined}
-								key={col.day.toISOString()}
-								precomputedEvents={dayEventsMap.get(getDayKey(col.day))}
-								resourceId={resource?.id}
-								showDayNumber={showDayNumber}
-							/>
-						) : null
-					})}
+								return col.day ? (
+									<GridCell
+										allDay={allDay}
+										allEventsDialogRef={allEventsDialogRef}
+										className={cn(
+											'flex-1 w-20',
+											isLastRow && 'border-b-0',
+											col.className
+										)}
+										compact={compact}
+										day={col.day}
+										gridType={gridType}
+										hour={gridType === 'hour' ? col.day.hour() : undefined}
+										key={col.day.toISOString()}
+										precomputedEvents={dayEventsMap.get(getDayKey(col.day))}
+										resourceId={resource?.id}
+										showDayNumber={showDayNumber}
+										suppressEventsDialog
+									/>
+								) : null
+							})}
 				</div>
 
 				{/* Events layer positioned absolutely over the row */}
-				{!isGrouped && (
+				{!isGrouped && !isGroupHeader && (
 					<div className="absolute inset-0 z-10 pointer-events-none">
 						<HorizontalGridEventsLayer
 							data-testid={keys.container.eventsLayer('horizontal', id)}
@@ -135,6 +174,7 @@ const NoMemoHorizontalGridRow: React.FC<HorizontalGridRowProps> = ({
 					</div>
 				)}
 			</div>
+			{!isGroupHeader && <AllEventDialog ref={allEventsDialogRef} />}
 		</div>
 	)
 }
@@ -155,6 +195,7 @@ const GroupedColumn = memo(
 		isLastRow,
 		isLastCol,
 		id,
+		compact,
 	}: {
 		col: HorizontalGridColumn
 		gridType?: 'day' | 'hour'
@@ -166,6 +207,7 @@ const GroupedColumn = memo(
 		isLastRow: boolean
 		isLastCol: boolean
 		id: string | number
+		compact?: boolean
 	}) => {
 		const days = col.days ?? []
 		const { positionedEvents } = useProcessedWeekEvents({
@@ -187,6 +229,7 @@ const GroupedColumn = memo(
 								!isLastCol && 'border-r!',
 								col.className
 							)}
+							compact={compact}
 							day={day}
 							gridType={gridType}
 							hour={gridType === 'hour' ? day.hour() : undefined}

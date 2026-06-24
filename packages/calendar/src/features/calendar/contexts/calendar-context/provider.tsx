@@ -76,6 +76,8 @@ export interface CalendarProviderProps {
 	orientation?: 'horizontal' | 'vertical'
 	/** Week-view granularity for resource weeks. @default 'hourly' */
 	weekViewGranularity?: 'hourly' | 'daily'
+	/** Optional arbitrary date window for the resource yearly timeline. */
+	resourceTimelineRange?: DateRange
 }
 
 // Module constant, not a per-render `?? []`: keeps the engine's event store
@@ -133,6 +135,7 @@ const useCalendarContextValue = (
 		renderResource,
 		orientation,
 		weekViewGranularity,
+		resourceTimelineRange,
 	} = props
 
 	const engine = useCalendarEngine({
@@ -159,6 +162,7 @@ const useCalendarContextValue = (
 		resources,
 		orientation,
 		weekViewGranularity,
+		resourceTimelineRange,
 	})
 
 	return useMemo(() => {
@@ -196,11 +200,13 @@ const useCalendarContextValue = (
 			slotDuration,
 			scrollTime,
 			renderResource,
+			resourceTimelineRange,
 		}
 	}, [
 		engine,
 		renderEvent,
 		renderResource,
+		resourceTimelineRange,
 		isCellDisabled,
 		locale,
 		timezone,

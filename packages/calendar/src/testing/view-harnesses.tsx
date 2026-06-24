@@ -1,6 +1,7 @@
 import type { FC } from 'react'
 import { dayView } from '@/features/calendar/components/views/day'
 import { monthView } from '@/features/calendar/components/views/month'
+import { resourceYearView } from '@/features/calendar/components/views/resource-year'
 import { ViewRenderer } from '@/features/calendar/components/views/view-renderer'
 import { weekView } from '@/features/calendar/components/views/week'
 
@@ -14,3 +15,4 @@ import { weekView } from '@/features/calendar/components/views/week'
 export const DayView: FC = () => <ViewRenderer view={dayView} />
 export const WeekView: FC = () => <ViewRenderer view={weekView} />
 export const MonthView: FC = () => <ViewRenderer view={monthView} />
+export const ResourceYearView: FC = () => <ViewRenderer view={resourceYearView} />

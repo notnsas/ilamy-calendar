@@ -6,6 +6,7 @@ import type { CalendarEngineReturn } from '@/features/calendar/hooks/use-calenda
 import type {
 	CalendarClassesOverride,
 	CellInfo,
+	DateRange,
 	RenderCurrentTimeIndicatorProps,
 	SlotDuration,
 } from '@/features/calendar/types'
@@ -47,6 +48,7 @@ export interface CalendarContextType extends CalendarEngineReturn {
 	scrollTime?: string
 	/** Custom render for resource header cells (resource axis presentation). */
 	renderResource?: (resource: Resource) => React.ReactNode
+	resourceTimelineRange?: DateRange
 }
 
 // CalendarContext is kept for internal Provider usage

@@ -65,6 +65,7 @@ export const IlamyCalendar: React.FC<IlamyCalendarProps> = ({
 	hiddenDays,
 	resources,
 	orientation,
+	resourceTimelineRange,
 	...props
 }) => {
 	const hasResources = Boolean(resources?.length)
@@ -74,6 +75,23 @@ export const IlamyCalendar: React.FC<IlamyCalendarProps> = ({
 	const normalizedEvents = useMemo(
 		() => normalizeEvents<IlamyCalendarPropEvent, CalendarEvent>(events),
 		[events]
+	)
+	const normalizedResourceTimelineRange = useMemo(
+		() => {
+			if (!resourceTimelineRange) {
+				return undefined
+			}
+
+			const start = safeDate(resourceTimelineRange.start)
+			const end = safeDate(resourceTimelineRange.end)
+
+			if (!start || !end) {
+				return undefined
+			}
+
+			return { start, end }
+		},
+		[resourceTimelineRange]
 	)
 	useEffect(() => {
 		// Guarded `typeof process` check: the published bundle ships this line
@@ -100,6 +118,7 @@ export const IlamyCalendar: React.FC<IlamyCalendarProps> = ({
 			initialDate={safeDate(initialDate)}
 			initialView={initialView}
 			orientation={orientation}
+			resourceTimelineRange={normalizedResourceTimelineRange}
 			resources={resources}
 			stickyViewHeader={stickyViewHeader}
 			timeFormat={timeFormat}

@@ -5,14 +5,16 @@ import { builtInViews } from '@/features/calendar/components/views/built-in-view
 import type { PluginRuntime } from '@/features/plugins/lib/types'
 import { getMonthGridRange } from '@/lib/utils/date-utils'
 import type { CalendarView } from '@/types'
+import type { DateRange } from '@/features/calendar/types'
 
 const calculateViewRange = (
 	date: Dayjs,
 	viewSpec: PluginView | undefined,
-	firstDayOfWeek: number
+	firstDayOfWeek: number,
+	resourceTimelineRange?: DateRange
 ): { start: Dayjs; end: Dayjs } =>
 	// Views without `range` keep today's fallback: the month 6x7 grid range.
-	viewSpec?.range?.(date, { firstDayOfWeek }) ??
+	viewSpec?.range?.(date, { firstDayOfWeek, resourceTimelineRange }) ??
 	getMonthGridRange(date, firstDayOfWeek)
 
 interface CalendarNavigationParams {
@@ -22,6 +24,7 @@ interface CalendarNavigationParams {
 	onDateChange?: (date: Dayjs, range: { start: Dayjs; end: Dayjs }) => void
 	onViewChange?: (view: CalendarView) => void
 	pluginRuntime: PluginRuntime
+	resourceTimelineRange?: DateRange
 }
 
 export interface CalendarNavigationSlice {
@@ -50,6 +53,7 @@ export const useCalendarNavigation = ({
 	onDateChange,
 	onViewChange,
 	pluginRuntime,
+	resourceTimelineRange,
 }: CalendarNavigationParams): CalendarNavigationSlice => {
 	const [currentDate, setCurrentDate] = useState<Dayjs>(
 		dayjs.isDayjs(initialDate) ? initialDate : dayjs(initialDate)
@@ -69,9 +73,10 @@ export const useCalendarNavigation = ({
 		return calculateViewRange(
 			currentDate,
 			resolveViewSpec(view),
-			firstDayOfWeek
+			firstDayOfWeek,
+			resourceTimelineRange
 		)
-	}, [currentDate, view, firstDayOfWeek, resolveViewSpec])
+	}, [currentDate, view, firstDayOfWeek, resolveViewSpec, resourceTimelineRange])
 
 	const updateDateAndNotify = useCallback(
 		(newDate: Dayjs) => {
@@ -79,11 +84,12 @@ export const useCalendarNavigation = ({
 			const range = calculateViewRange(
 				newDate,
 				resolveViewSpec(view),
-				firstDayOfWeek
+				firstDayOfWeek,
+				resourceTimelineRange
 			)
 			onDateChange?.(newDate, range)
 		},
-		[onDateChange, view, firstDayOfWeek, resolveViewSpec]
+		[onDateChange, view, firstDayOfWeek, resolveViewSpec, resourceTimelineRange]
 	)
 
 	const selectDate = updateDateAndNotify
@@ -117,11 +123,19 @@ export const useCalendarNavigation = ({
 			const range = calculateViewRange(
 				currentDate,
 				resolveViewSpec(newView),
-				firstDayOfWeek
+				firstDayOfWeek,
+				resourceTimelineRange
 			)
 			onDateChange?.(currentDate, range)
 		},
-		[onViewChange, onDateChange, currentDate, firstDayOfWeek, resolveViewSpec]
+		[
+			onViewChange,
+			onDateChange,
+			currentDate,
+			firstDayOfWeek,
+			resolveViewSpec,
+			resourceTimelineRange,
+		]
 	)
 
 	return useMemo(

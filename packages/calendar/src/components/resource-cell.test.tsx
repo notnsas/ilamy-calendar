@@ -46,9 +46,33 @@ describe('ResourceCell', () => {
 	test('renders with defaults', () => {
 		renderResourceCell()
 		const cell = screen.getByTestId('resource-cell')
-		expect(cell).toContainHTML(
-			'<div class="text-sm font-medium truncate">Resource 1</div>'
+		expect(cell).toHaveTextContent('Resource 1')
+		expect(cell.querySelector('.truncate')).toHaveTextContent('Resource 1')
+	})
+
+	test('renders booking availability when resource data provides room counts', () => {
+		const bookingResource: Resource = {
+			id: 'bungalow-sea-view',
+			title: 'Bungalow Sea View',
+			data: { availableRooms: 2, totalRooms: 4 },
+		}
+
+		render(
+			<CalendarProvider
+				dayMaxEvents={3}
+				events={[]}
+				initialDate={initialDate}
+				resources={[bookingResource]}
+			>
+				<ResourceCell data-testid="resource-cell" resource={bookingResource} />
+			</CalendarProvider>
 		)
+
+		expect(screen.getByTestId('resource-cell')).toHaveTextContent(
+			'Bungalow Sea View'
+		)
+		expect(screen.getByTestId('resource-cell')).toHaveTextContent('2 left')
+		expect(screen.getByTestId('resource-cell')).toHaveTextContent('2/4')
 	})
 
 	test('renders with renderResource if provided', () => {

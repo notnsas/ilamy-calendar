@@ -1,7 +1,7 @@
-import { beforeEach, describe, expect, test } from 'bun:test'
+import { beforeEach, describe, expect, mock, test } from 'bun:test'
 import type { CalendarEvent, Resource } from '@ilamy/types'
 import dayjs from '@ilamy/utils/dayjs'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { CalendarProvider } from '@/features/calendar/contexts/calendar-context/provider'
 import {
 	DAY_NUMBER_HEIGHT,
@@ -352,6 +352,81 @@ describe('HorizontalGridRow', () => {
 			expect(
 				[eventWrapper('a'), eventWrapper('b')].map((el) => el.style.top)
 			).toEqual([`${rowZeroTop}px`, `${rowOneTop}px`])
+		})
+	})
+
+	describe('resource groups', () => {
+		const defaultColumns = [
+			{
+				id: 'col-1',
+				day: initialDate,
+				gridType: 'day' as const,
+			},
+		]
+
+		test('renders a group header row with collapse toggle', () => {
+			render(
+				<CalendarProvider
+					dayMaxEvents={3}
+					events={[]}
+					initialDate={initialDate}
+					resources={[]}
+				>
+					<HorizontalGridRow
+						columns={defaultColumns}
+						id="group-standard"
+						resourceGroup={{ id: 'standard', title: 'Standard Room' }}
+						rowKind="group-header"
+					/>
+				</CalendarProvider>
+			)
+
+			expect(
+				screen.getByTestId('resource-group-header-standard')
+			).toBeInTheDocument()
+			expect(screen.getByText('Standard Room')).toBeInTheDocument()
+			expect(
+				screen.getByTestId('resource-group-toggle-standard')
+			).toBeInTheDocument()
+		})
+	})
+
+	describe('resource yearly timeline cells', () => {
+		test('compact yearly cells still call onCellClick with the resource', () => {
+			const onCellClick = mock()
+			const columns = [
+				{
+					id: 'col-1',
+					day: initialDate,
+					gridType: 'day' as const,
+				},
+			]
+
+			render(
+				<CalendarProvider
+					dayMaxEvents={3}
+					events={[]}
+					initialDate={initialDate}
+					initialView="resourceYear"
+					onCellClick={onCellClick}
+					resources={[mockResource]}
+				>
+					<HorizontalGridRow
+						columns={columns}
+						id="row-1"
+						resource={mockResource}
+					/>
+				</CalendarProvider>
+			)
+
+			fireEvent.click(screen.getByTestId('day-cell-2025-01-01'))
+
+			expect(onCellClick).toHaveBeenCalledTimes(1)
+			const callArgs = onCellClick.mock.calls[0][0]
+			expect(callArgs.start.toISOString()).toBe('2025-01-01T00:00:00.000Z')
+			expect(callArgs.end.hour()).toBe(23)
+			expect(callArgs.end.minute()).toBe(59)
+			expect(callArgs.resource?.id).toBe('res-1')
 		})
 	})
 })

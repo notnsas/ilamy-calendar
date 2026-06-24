@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test } from 'bun:test'
 import type { Resource } from '@ilamy/types'
 import dayjs from '@ilamy/utils/dayjs'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { CalendarProvider } from '@/features/calendar/contexts/calendar-context/provider'
 import { HorizontalGrid } from './horizontal-grid'
 
@@ -99,5 +99,59 @@ describe('HorizontalGrid', () => {
 		expect(screen.getByTestId('horizontal-grid-body')).toHaveClass(
 			'custom-body-class'
 		)
+	})
+
+	test('hides grouped resource rows when the group is collapsed', () => {
+		const groupedRows = [
+			{
+				id: 'group-standard',
+				rowKind: 'group-header' as const,
+				resourceGroup: { id: 'standard', title: 'Standard Room' },
+				columns: mockDays.map((day) => ({
+					id: `col-${day.toISOString()}`,
+					day,
+					gridType: 'day' as const,
+				})),
+			},
+			{
+				id: 'room-1',
+				rowKind: 'resource' as const,
+				resource: {
+					id: 'room-1',
+					title: 'Room 1',
+					groupId: 'standard',
+					groupTitle: 'Standard Room',
+				},
+				columns: mockDays.map((day) => ({
+					id: `col-${day.toISOString()}`,
+					day,
+					gridType: 'day' as const,
+				})),
+			},
+		]
+
+		render(
+			<CalendarProvider
+				dayMaxEvents={3}
+				events={[]}
+				initialDate={initialDate}
+				resources={[]}
+			>
+				<HorizontalGrid rows={groupedRows} variant="resource">
+					<div data-testid="grid-children">Header Content</div>
+				</HorizontalGrid>
+			</CalendarProvider>
+		)
+
+		expect(screen.getByTestId('horizontal-row-room-1')).toBeInTheDocument()
+
+		fireEvent.click(screen.getByTestId('resource-group-toggle-standard'))
+
+		expect(
+			screen.queryByTestId('horizontal-row-room-1')
+		).not.toBeInTheDocument()
+		expect(
+			screen.getByTestId('resource-group-header-standard')
+		).toBeInTheDocument()
 	})
 })

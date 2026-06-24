@@ -95,6 +95,11 @@ export const keys = {
 	// Resource-scoped all-day row id (falls back to 'main' when unscoped).
 	allDayRow: (resourceId?: Id) => `allday-row-${resourceId ?? 'main'}`,
 
+	resourceGroup: {
+		header: (groupId: Id) => `resource-group-header-${groupId}`,
+		toggle: (groupId: Id) => `resource-group-toggle-${groupId}`,
+	},
+
 	// Generic iteration key composer for React `key=` props, list markers,
 	// and suffixed wrapper keys (e.g. `listKey(base, 'animated')`).
 	listKey: (...parts: Array<string | number>) => parts.join('-'),

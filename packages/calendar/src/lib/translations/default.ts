@@ -96,4 +96,6 @@ export const defaultTranslations = {
 	date: 'Date',
 	noResourcesVisible: 'No resources visible',
 	addResourcesOrShowExisting: 'Add resources or show existing ones',
+	collapseResourceGroup: 'Collapse resource group',
+	expandResourceGroup: 'Expand resource group',
 } satisfies Record<string, string>

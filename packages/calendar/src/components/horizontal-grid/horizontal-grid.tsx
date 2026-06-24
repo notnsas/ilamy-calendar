@@ -1,7 +1,7 @@
 import { ScrollArea, ScrollBar } from '@ilamy/ui/components/scroll-area'
 import { cn } from '@ilamy/ui/lib/utils'
 import type React from 'react'
-import { useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import { useScrollToTime } from '@/components/vertical-grid/use-scroll-to-time'
 import { useSmartCalendarContext } from '@/features/calendar/hooks/use-smart-calendar-context'
 import { HorizontalGridHeaderContainer } from './horizontal-grid-header-container'
@@ -29,8 +29,25 @@ export const HorizontalGrid: React.FC<HorizontalGridProps> = ({
 	variant = 'resource',
 	dayNumberHeight,
 }) => {
-	const { currentDate, view, scrollTime } = useSmartCalendarContext()
+	const { currentDate, view, scrollTime, isResourceGroupCollapsed } =
+		useSmartCalendarContext((ctx) => ({
+			currentDate: ctx.currentDate,
+			view: ctx.view,
+			scrollTime: ctx.scrollTime,
+			isResourceGroupCollapsed: ctx.isResourceGroupCollapsed,
+		}))
 	const viewportRef = useRef<HTMLDivElement | null>(null)
+
+	const visibleRows = useMemo(
+		() =>
+			rows.filter((row) => {
+				if (row.rowKind === 'resource' && row.resource?.groupId != null) {
+					return !isResourceGroupCollapsed(row.resource.groupId)
+				}
+				return true
+			}),
+		[rows, isResourceGroupCollapsed]
+	)
 
 	const isResourceCalendar = variant === 'resource'
 	const isRegularCalendar = !isResourceCalendar
@@ -82,12 +99,12 @@ export const HorizontalGrid: React.FC<HorizontalGridProps> = ({
 						className="relative w-full flex flex-col flex-1"
 						key={currentDate.format('YYYY-MM')}
 					>
-						{rows.map((row, index) => (
+						{visibleRows.map((row, index) => (
 							<HorizontalGridRow
 								allDay={row.allDay ?? topLevelAllDay}
 								dayNumberHeight={dayNumberHeight}
 								gridType={gridType}
-								isLastRow={index === rows.length - 1}
+								isLastRow={index === visibleRows.length - 1}
 								key={row.id}
 								variant={variant}
 								{...row}

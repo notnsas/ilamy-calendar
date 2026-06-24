@@ -1,5 +1,5 @@
 {
-	"name": "@ilamy/calendar",
+	"name": "@notnsas/calendar",
 	"version": "1.8.2",
 	"description": "A full-featured React calendar component library built with Shadcn-Ui, Tailwind CSS, and TypeScript.",
 	"author": "Sujeet Kc",
@@ -62,7 +62,8 @@
 		"lint": "bunx biome lint . --diagnostic-level=error",
 		"check": "bunx biome check . --diagnostic-level=error",
 		"check:fix": "bunx biome check --write .",
-		"ci": "bun run check && bun run type-check && bun run test && bun run build"
+		"ci": "bun run check && bun run type-check && bun run test && bun run build",
+		"prepack": "bun scripts/prepack.ts"
 	},
 	"peerDependencies": {
 		"react": "^19.2.0",

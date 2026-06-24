@@ -984,6 +984,28 @@ describe('orientation without resources', () => {
 	})
 })
 
+describe('resource yearly timeline range', () => {
+	it('renders the requested booking date window instead of the whole year', () => {
+		render(
+			<IlamyCalendar
+				events={[]}
+				initialDate={dayjs('2025-01-01T00:00:00.000Z')}
+				initialView="resourceYear"
+				resourceTimelineRange={{
+					start: dayjs('2025-01-26T00:00:00.000Z'),
+					end: dayjs('2025-11-01T00:00:00.000Z'),
+				}}
+				resources={[{ id: 'room-1', title: 'Room 1' }]}
+			/>
+		)
+
+		expect(screen.queryByTestId('day-cell-2025-01-25')).not.toBeInTheDocument()
+		expect(screen.getByTestId('day-cell-2025-01-26')).toBeInTheDocument()
+		expect(screen.getByTestId('day-cell-2025-11-01')).toBeInTheDocument()
+		expect(screen.queryByTestId('day-cell-2025-11-02')).not.toBeInTheDocument()
+	})
+})
+
 describe('IlamyCalendar - internal edits survive re-render (issue #197)', () => {
 	const STANDUP: CalendarEvent = {
 		id: 'standup',

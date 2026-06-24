@@ -132,6 +132,7 @@ export const ViewRenderer: React.FC<{ view: PluginView }> = ({ view }) => {
 		resources,
 		orientation,
 		weekViewGranularity,
+		resourceTimelineRange,
 	} = useSmartCalendarContext((c) => ({
 		currentDate: c.currentDate,
 		firstDayOfWeek: c.firstDayOfWeek,
@@ -141,6 +142,7 @@ export const ViewRenderer: React.FC<{ view: PluginView }> = ({ view }) => {
 		resources: c.resources,
 		orientation: c.orientation,
 		weekViewGranularity: c.weekViewGranularity,
+		resourceTimelineRange: c.resourceTimelineRange,
 	}))
 
 	const config = useMemo<ViewConfig>(
@@ -152,6 +154,7 @@ export const ViewRenderer: React.FC<{ view: PluginView }> = ({ view }) => {
 			resources,
 			orientation,
 			weekViewGranularity,
+			resourceTimelineRange,
 		}),
 		[
 			firstDayOfWeek,
@@ -161,6 +164,7 @@ export const ViewRenderer: React.FC<{ view: PluginView }> = ({ view }) => {
 			resources,
 			orientation,
 			weekViewGranularity,
+			resourceTimelineRange,
 		]
 	)
 
