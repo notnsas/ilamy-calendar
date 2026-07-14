@@ -3,6 +3,7 @@ import type { Dayjs } from '@ilamy/utils/dayjs'
 import { useCallback, useMemo, useState } from 'react'
 import type { CellInfo, OpenEventFormInput } from '@/features/calendar/types'
 import type { TranslatorFunction } from '@/lib/translations/types'
+import dayjs from '@ilamy/utils/dayjs'
 
 /**
  * A new-event draft intentionally has no `id` yet — the form assigns one on
@@ -78,6 +79,7 @@ export const useCalendarInteraction = ({
 				setSelectedDate(start)
 			}
 			const draftStart = start ?? currentDate
+			// console.log('selectedEvent', selectedEvent)
 			setSelectedEvent(
 				buildEventDraft({
 					title: t('newEvent'),
@@ -121,13 +123,32 @@ export const useCalendarInteraction = ({
 
 	const handleDateClick = useCallback(
 		(info: CellInfo) => {
+			// console.log('handleDateClick info', info)
+			const { start, end, resource, allDay, isRuleResource } = info
+			
+			if (isRuleResource) {
+				setSelectedEvent({
+						id: `rule-${resource?.id}-${start.valueOf()}`,
+						title: t(`RESOURCE_RULE_EVENT {}`),
+						start: start,
+						end: end,
+						resourceId: resource?.id,
+						description: '',
+						allDay: allDay ?? false,
+						isRule: true,
+					}
+				)
+				return
+			}
+		
 			if (disableCellClick) {
 				return
 			}
-
 			if (onCellClick) {
+				// console.log('cell clik ke run ini info', info)
 				onCellClick(info)
 			} else {
+				// console.log('cell click ga ke run ini info', info)
 				openEventForm(info)
 			}
 		},

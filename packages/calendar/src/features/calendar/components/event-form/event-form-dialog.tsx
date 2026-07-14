@@ -47,6 +47,8 @@ export const EventFormDialog = () => {
 		onDelete: handleOnDelete,
 	}
 
+	// console.log('selectedEvent in dialog', selectedEvent)
+
 	if (renderEventForm) {
 		return renderEventForm(eventFormProps)
 	}

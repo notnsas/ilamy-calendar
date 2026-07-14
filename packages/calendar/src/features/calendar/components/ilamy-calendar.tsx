@@ -29,8 +29,9 @@ const CalendarContent: React.FC = () => {
 	}))
 
 	const spec = getViews().find((v) => v.name === view)
+	// console.log('CalendarContent spec:', spec) // Debugging log
 	const activeView = spec ? <ViewRenderer key={view} view={spec} /> : null
-
+	
 	return (
 		<div className="flex flex-col w-full h-full" data-testid="ilamy-calendar">
 			<Header className="p-1 shrink-0 mb-1" />
@@ -76,6 +77,7 @@ export const IlamyCalendar: React.FC<IlamyCalendarProps> = ({
 		() => normalizeEvents<IlamyCalendarPropEvent, CalendarEvent>(events),
 		[events]
 	)
+
 	const normalizedResourceTimelineRange = useMemo(
 		() => {
 			if (!resourceTimelineRange) {
@@ -106,7 +108,7 @@ export const IlamyCalendar: React.FC<IlamyCalendarProps> = ({
 			)
 		}
 	}, [orientation, hasResources])
-
+	 
 	return (
 		<CalendarProvider
 			eventHeight={eventHeight}

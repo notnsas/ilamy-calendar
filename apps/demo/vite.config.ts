@@ -45,5 +45,9 @@ export default defineConfig({
 	server: {
 		port: 4100,
 		strictPort: true,
+		watch: {
+    usePolling: true,  // polling instead of inotify
+    interval: 500,
+  },
 	},
 })

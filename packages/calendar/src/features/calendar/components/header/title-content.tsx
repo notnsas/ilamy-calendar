@@ -35,6 +35,7 @@ export const TitleContent = () => {
 	const currentYear = currentDate.year()
 	const years = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i)
 	const weekDays = getWeekDays(currentDate, firstDayOfWeek)
+	const twoWeekDays = getWeekDays(currentDate, firstDayOfWeek, 2)
 
 	const handleSelectDate = (date: Dayjs) => {
 		selectDate(date)
@@ -77,15 +78,16 @@ export const TitleContent = () => {
 		</>
 	)
 
-	const renderWeekContent = () => (
+	const renderWeekContent = (numOfWeeks: number) => (
 		<>
 			{Array.from({ length: 7 }, (_, i) => {
-				const weekDate = currentDate.subtract(3, 'week').add(i, 'week')
-				const days = getWeekDays(weekDate, firstDayOfWeek)
-				const start = days.at(0) ?? weekDate
-				const end = days.at(-1) ?? weekDate
-				const isCurrentWeek = weekDate.isSame(currentDate, 'week')
+				const weekDate = currentDate.subtract(3, 'week').add(i * numOfWeeks, 'week')
+				const days = getWeekDays(weekDate, firstDayOfWeek, numOfWeeks)
 
+				const start = days.at(0) ?? weekDate
+				const end = (days.at(-1) ?? weekDate)
+
+				const isCurrentWeek = weekDate.isSame(currentDate, 'week')
 				return (
 					<Button
 						className={cn(
@@ -162,7 +164,17 @@ export const TitleContent = () => {
 				weekDays.at(-1) ?? currentDate
 			),
 			triggerStyle: undefined,
-			render: renderWeekContent,
+			render: () => renderWeekContent(1),
+		},
+		{
+			id: 'two-week',
+			hidden: view !== 'two-week',
+			title: formatDateRange(
+				twoWeekDays.at(0) ?? currentDate,
+				twoWeekDays.at(-1) ?? currentDate
+			),
+			triggerStyle: undefined,
+			render: () => renderWeekContent(2),
 		},
 		{
 			id: 'day',

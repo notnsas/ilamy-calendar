@@ -1,7 +1,8 @@
 import { ScrollArea, ScrollBar } from '@ilamy/ui/components/scroll-area'
 import { cn } from '@ilamy/ui/lib/utils'
+import { calculateViewportWidth, calculateVirtualizeIndex, calculateLeftPadding, calculateSlicedRows, useVirtualize } from '@/lib/utils/optimize'
 import type React from 'react'
-import { useMemo, useRef } from 'react'
+import { useMemo, useRef, useState, useEffect } from 'react'
 import { useScrollToTime } from '@/components/vertical-grid/use-scroll-to-time'
 import { useSmartCalendarContext } from '@/features/calendar/hooks/use-smart-calendar-context'
 import { HorizontalGridHeaderContainer } from './horizontal-grid-header-container'
@@ -37,6 +38,20 @@ export const HorizontalGrid: React.FC<HorizontalGridProps> = ({
 			isResourceGroupCollapsed: ctx.isResourceGroupCollapsed,
 		}))
 	const viewportRef = useRef<HTMLDivElement | null>(null)
+	// console.log('HorizontalGrid rows:', rows) // Debugging log
+	
+	// const priceRow = {
+	// 	...rows[1], // copy semua field dari row lama (columns, dll)
+	// 	id: "room-price",
+	// 	rowKind: "resource",
+	// 	resource: {
+	// 		...rows[1].resource,
+	// 		id: "room-price",
+	// 		title: "Price",
+	// 	},
+	// }
+
+	// rows.splice(1, 0, priceRow) 
 
 	const visibleRows = useMemo(
 		() =>
@@ -67,6 +82,9 @@ export const HorizontalGrid: React.FC<HorizontalGridProps> = ({
 		</HorizontalGridHeaderContainer>
 	)
 
+	const { startIndex, endIndex, leftPadding } = useVirtualize(() => viewportRef.current, viewportRef, 80, 5)
+	const slicedRows = calculateSlicedRows(visibleRows, startIndex, endIndex)
+	// console.log('slicedRows:', slicedRows) // Debugging log
 	return (
 		<div
 			className="h-full flex flex-col"
@@ -99,22 +117,23 @@ export const HorizontalGrid: React.FC<HorizontalGridProps> = ({
 						className="relative w-full flex flex-col flex-1"
 						key={currentDate.format('YYYY-MM')}
 					>
-						{visibleRows.map((row, index) => (
+						{slicedRows.map((row, index) => (
 							<HorizontalGridRow
 								allDay={row.allDay ?? topLevelAllDay}
 								dayNumberHeight={dayNumberHeight}
 								gridType={gridType}
-								isLastRow={index === visibleRows.length - 1}
+								isLastRow={index === slicedRows.length - 1}
 								key={row.id}
 								variant={variant}
+								leftPadding={leftPadding}
 								{...row}
 							/>
 						))}
 					</div>
 				</div>
 
-				<ScrollBar className="z-30" />
-				<ScrollBar className="z-30" orientation="horizontal" />
+				<ScrollBar className="z-40 h-4" />
+				<ScrollBar className="z-40 h-4" orientation="horizontal" />
 			</ScrollArea>
 		</div>
 	)

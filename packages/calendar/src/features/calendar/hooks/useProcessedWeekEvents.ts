@@ -34,22 +34,29 @@ export const useProcessedWeekEvents = ({
 	const last = days.at(-1)
 	const weekStart = first?.startOf('day')
 	const weekEnd = last?.endOf('day')
-
+	
 	const events = useMemo(() => {
 		if (!weekStart || !weekEnd) return []
 
 		let weekEvents = getEventsForDateRange(weekStart, weekEnd)
+		// console.log('Fetched events for the week:', weekEvents)
+		// console.log('resourceId:', resourceId ,' allDay:', allDay	)
 		if (resourceId) {
 			weekEvents = filterEventsForResource(weekEvents, resourceId)
+			// console.log(`Filtered events for resource ${resourceId}:`, weekEvents)
 		}
 
 		if (allDay) {
 			weekEvents = weekEvents.filter((e) => Boolean(e.allDay))
 		}
 
+		weekEvents = weekEvents.filter((event) => !event.isRule)
+
+		// console.log('Processed events for the week after filtering:', weekEvents)
+
 		return weekEvents
 	}, [getEventsForDateRange, weekStart, weekEnd, resourceId, allDay])
-
+	// console.log('Processed events for the week:', events)
 	const dayEventsMap = useMemo(() => {
 		const map = new Map<string, CalendarEvent[]>()
 		for (const day of days) {

@@ -68,7 +68,9 @@ export interface CellInfo {
 	/** Full resource object in resource calendars; undefined in a regular calendar */
 	resource?: Resource
 	/** Whether this is an all-day cell (optional) */
-	allDay?: boolean
+	allDay?: boolean,
+	/** Whether this cell is part of a rule resource (optional) */
+	isRuleResource?: boolean
 }
 
 /**

@@ -11,7 +11,7 @@ interface EventDragOverlayProps {
 
 export const EventDragOverlay: React.FC<EventDragOverlayProps> = ({ ref }) => {
 	const [activeEvent, setActiveEvent] = useState<CalendarEvent | null>(null)
-
+	 
 	useImperativeHandle(ref, () => ({
 		setActiveEvent,
 	}))

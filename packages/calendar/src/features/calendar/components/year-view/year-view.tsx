@@ -35,6 +35,7 @@ export const YearView = () => {
 		t,
 		firstDayOfWeek,
 	} = useSmartCalendarContext()
+
 	const currentYear = currentDate.year()
 
 	const weekdayHeaders = getWeekDays(dayjs(), firstDayOfWeek).map((d) => ({

@@ -2,7 +2,7 @@ import { useDraggable } from '@dnd-kit/core'
 import type { CalendarEvent } from '@ilamy/types'
 import { cn } from '@ilamy/ui/lib/utils'
 import type { CSSProperties } from 'react'
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
 import { AnimatedSection } from '@/components/animations/animated-section'
 import { useSmartCalendarContext } from '@/features/calendar/hooks/use-smart-calendar-context'
 
@@ -41,14 +41,21 @@ function DraggableEventUnmemoized({
 	isTruncatedEnd?: boolean
 }) {
 	const { onEventClick, renderEvent, disableEventClick, disableDragAndDrop } =
-		useSmartCalendarContext()
+		useSmartCalendarContext((ctx) => ({
+			onEventClick: ctx.onEventClick,
+			renderEvent: ctx.renderEvent,
+			disableEventClick: ctx.disableEventClick,
+			disableDragAndDrop: ctx.disableDragAndDrop,
+		}))
+
+	const dragData = useMemo(() => ({
+        event,
+        type: 'calendar-event',
+    }), [event])
 
 	const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
 		id: elementId,
-		data: {
-			event,
-			type: 'calendar-event',
-		},
+		data: dragData, // <-- Use the memoized object here
 		disabled: disableDrag || disableDragAndDrop,
 	})
 

@@ -59,11 +59,16 @@ export const useCalendarNavigation = ({
 		dayjs.isDayjs(initialDate) ? initialDate : dayjs(initialDate)
 	)
 	const [view, setView] = useState<CalendarView>(initialView)
-
+	// console.log('pluginRuntime getviews:', pluginRuntime.getViews()) // Debugging log
+	// console.log('builtInViews:', builtInViews) // Debugging log
+	
 	const getAllViews = useCallback(
 		() => [...builtInViews, ...pluginRuntime.getViews()],
 		[pluginRuntime]
 	)
+
+	// console.log('getAllViews:', getAllViews()) // Debugging log
+
 	const resolveViewSpec = useCallback(
 		(name: CalendarView) => getAllViews().find((v) => v.name === name),
 		[getAllViews]

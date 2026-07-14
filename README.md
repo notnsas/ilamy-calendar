@@ -93,7 +93,7 @@ const MyApp = () => {
       <IlamyCalendar 
         events={events}
         initialView="week"
-        onEventClick={(event) => console.log('Clicked:', event)}
+        onEventClick={(event) =>  // console.log('Clicked:', event)}
       />
     </div>
   );

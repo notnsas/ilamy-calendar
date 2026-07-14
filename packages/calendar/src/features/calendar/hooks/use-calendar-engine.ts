@@ -87,6 +87,7 @@ export interface CalendarEngineReturn
 	collect: (point: string, context: unknown) => unknown[]
 	getProviders: () => Array<ComponentType<{ children: ReactNode }>>
 	getEventResourceIds: (event: CalendarEvent) => (string | number)[]
+	getResourceGroupId: () => (string | number)[]
 }
 
 /**
@@ -103,6 +104,7 @@ interface CalendarEngineHandlers {
 export const useCalendarEngine = (
 	config: CalendarEngineConfig
 ): CalendarEngineReturn & CalendarEngineHandlers => {
+	 
 	const {
 		events,
 		firstDayOfWeek = 0,
@@ -128,6 +130,31 @@ export const useCalendarEngine = (
 		weekViewGranularity,
 		resourceTimelineRange,
 	} = config
+	console.log('Calendar Engine resources:', resources) // Debugging log
+
+	const processedResources = useMemo(() => {
+		const finalResources: Resource[] = [];
+		const seenGroups = new Set<string | number>();
+
+		resources?.forEach((resource) => {
+			// 1. FIRST check if it's a new group, and if so, push the Price row BEFORE the room
+			if (resource.groupId && !seenGroups.has(resource.groupId)) {
+				seenGroups.add(resource.groupId);
+				
+				finalResources.push({
+					id: `price-row-${resource.groupId}`,
+					title: 'Price',
+					groupId: resource.groupId,
+					data: { isRuleResource: true } 
+				});
+			}
+
+			// 2. THEN push the actual room resource AFTER the price row
+			finalResources.push(resource);
+  });
+
+  return finalResources;
+}, [resources]);
 
 	const { plugins = EMPTY_PLUGINS } = config
 
@@ -141,7 +168,7 @@ export const useCalendarEngine = (
 		locale,
 		translations,
 		translator,
-		resources,
+		resources: processedResources,
 		orientation,
 		weekViewGranularity,
 	})
@@ -221,7 +248,7 @@ export const useCalendarEngine = (
 			...navigationValues
 		} = navigation
 		const { setCurrentEvents: _dataInternal, ...dataValues } = data
-
+		// console.log('interaction', interaction)
 		return {
 			...configValues,
 			...navigationValues,
@@ -233,6 +260,7 @@ export const useCalendarEngine = (
 			collect: pluginRuntime.collect,
 			getProviders: pluginRuntime.getProviders,
 			getEventResourceIds,
+			getResourceGroupId: data.getResourceGroupId,
 		}
 	}, [configSlice, navigation, data, interaction, pluginRuntime])
 }

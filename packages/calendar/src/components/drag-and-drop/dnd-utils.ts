@@ -15,30 +15,21 @@ export const getUpdatedEvent = (
 	event: DragEndEvent,
 	activeEvent: CalendarEvent | null
 ) => {
+	 
 	const { active, over } = event
-
 	if (!active || !over || !activeEvent) {
 		return null
 	}
-
+	
 	const data = (over.data.current || {}) as DropCellData
 	const isTimeCell = data.type === 'time-cell'
 	const { resourceId, allDay } = data
-	let newStart: Dayjs
 
-	if (isTimeCell) {
-		const { date, hour = 0, minute = 0 } = data
-
-		// Create new start time based on the drop target
-		newStart = dayjs(date).hour(hour).minute(minute)
-	} else {
-		const { date } = data
-
-		newStart = dayjs(date)
-	}
+	const newStart = dayjs(data.date)
+		.add(activeEvent.start.hour(), 'hour')
+		.add(activeEvent.start.minute(), 'minute')
 
 	const eventDuration = activeEvent.end.diff(activeEvent.start, 'second')
-
 	// Create new end time by adding the original duration
 	let newEnd = newStart.add(eventDuration, 'second')
 

@@ -126,18 +126,18 @@ import { IlamyCalendar } from '@ilamy/calendar';
 
 function MyCalendar() {
   const handleEventClick = (event) => {
-    console.log('Event clicked:', event);
+     // console.log('Event clicked:', event);
     // Open event details modal, navigate to event page, etc.
   };
 
   const handleDateClick = (info) => {
-    console.log('Date clicked:', info.start, info.end);
+     // console.log('Date clicked:', info.start, info.end);
     // Create new event, switch to day view, etc.
     // info contains: { start: Dayjs, end: Dayjs, resource?: Resource, allDay?: boolean }
   };
 
   const handleViewChange = (view) => {
-    console.log('View changed to:', view);
+     // console.log('View changed to:', view);
     // Update URL, track analytics, etc.
   };
 
@@ -203,7 +203,7 @@ function CustomCalendar() {
       events={events}
       renderEvent={renderEvent}
       onEventClick={(event) => alert(`Clicked: ${event.title}`)}
-      onCellClick={(info) => console.log('Selected date:', info.start, info.end)}
+      onCellClick={(info) =>  // console.log('Selected date:', info.start, info.end)}
     />
   );
 }
@@ -248,13 +248,13 @@ function AdvancedCalendar() {
   const [events, setEvents] = useState([]);
 
   const handleEventAdd = (event) => {
-    console.log('New event added:', event);
+     // console.log('New event added:', event);
     setEvents(prev => [...prev, event]);
     // Save to your backend API
   };
 
   const handleEventUpdate = (updatedEvent) => {
-    console.log('Event updated:', updatedEvent);
+     // console.log('Event updated:', updatedEvent);
     setEvents(prev =>
       prev.map(event =>
         event.id === updatedEvent.id ? updatedEvent : event
@@ -264,7 +264,7 @@ function AdvancedCalendar() {
   };
 
   const handleEventDelete = (deletedEvent) => {
-    console.log('Event deleted:', deletedEvent);
+     // console.log('Event deleted:', deletedEvent);
     setEvents(prev =>
       prev.filter(event => event.id !== deletedEvent.id)
     );
@@ -272,8 +272,8 @@ function AdvancedCalendar() {
   };
 
   const handleDateChange = (date, range) => {
-    console.log('Date changed to:', date.format('YYYY-MM-DD'));
-    console.log('Visible range:', range.start.format('YYYY-MM-DD'), 'to', range.end.format('YYYY-MM-DD'));
+     // console.log('Date changed to:', date.format('YYYY-MM-DD'));
+     // console.log('Visible range:', range.start.format('YYYY-MM-DD'), 'to', range.end.format('YYYY-MM-DD'));
     // Load events for the visible date range
     // fetchEventsForRange(range.start, range.end);
   };
@@ -286,8 +286,8 @@ function AdvancedCalendar() {
       onEventUpdate={handleEventUpdate}
       onEventDelete={handleEventDelete}
       onDateChange={handleDateChange}
-      onEventClick={(event) => console.log('Event clicked:', event)}
-      onCellClick={(info) => console.log('Cell clicked:', info.start, info.end)}
+      onEventClick={(event) =>  // console.log('Event clicked:', event)}
+      onCellClick={(info) =>  // console.log('Cell clicked:', info.start, info.end)}
     />
   );
 }
@@ -676,7 +676,7 @@ function CalendarWithAPI() {
       if (response.ok) {
         const savedEvent = await response.json();
         setEvents(prev => [...prev, savedEvent]);
-        console.log('Event created successfully:', savedEvent);
+         // console.log('Event created successfully:', savedEvent);
       }
     } catch (error) {
       console.error('Failed to create event:', error);
@@ -701,7 +701,7 @@ function CalendarWithAPI() {
             event.id === updatedEvent.id ? updatedEvent : event
           )
         );
-        console.log('Event updated successfully:', updatedEvent);
+         // console.log('Event updated successfully:', updatedEvent);
       }
     } catch (error) {
       console.error('Failed to update event:', error);
@@ -722,7 +722,7 @@ function CalendarWithAPI() {
         setEvents(prev =>
           prev.filter(event => event.id !== deletedEvent.id)
         );
-        console.log('Event deleted successfully:', deletedEvent);
+         // console.log('Event deleted successfully:', deletedEvent);
       }
     } catch (error) {
       console.error('Failed to delete event:', error);
@@ -733,7 +733,7 @@ function CalendarWithAPI() {
 
   // Handle date navigation and view changes
   const handleDateChange = async (date, range) => {
-    console.log('Navigating to:', date.format('YYYY-MM-DD'));
+     // console.log('Navigating to:', date.format('YYYY-MM-DD'));
 
     // Load events for the visible date range
     try {
@@ -768,7 +768,7 @@ function CalendarWithAPI() {
         onDateChange={handleDateChange}
         onEventClick={(event) => {
           // Navigate to event details or open modal
-          console.log('Event clicked:', event);
+           // console.log('Event clicked:', event);
         }}
       />
     </div>
@@ -949,15 +949,15 @@ Handle cell clicks with the CellInfo object:
 ```typescript
 const handleCellClick = (info: CellInfo) => {
   const { start, end, resource, allDay } = info;
-  console.log('Cell clicked from', start.format(), 'to', end.format());
+   // console.log('Cell clicked from', start.format(), 'to', end.format());
 
   if (allDay) {
-    console.log('Clicked in all-day row');
+     // console.log('Clicked in all-day row');
   }
 
   // For resource calendars, the full resource object is available
   if (resource) {
-    console.log('On resource:', resource.id);
+     // console.log('On resource:', resource.id);
   }
 
   // Create a new event — assign it to the cell's resource via resourceId

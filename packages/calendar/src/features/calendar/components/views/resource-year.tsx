@@ -1,8 +1,10 @@
 import type { Dayjs, PluginView, ViewConfig } from '@ilamy/types'
-import { Grid2x2 } from 'lucide-react'
+import { PanelsTopLeft } from 'lucide-react'
 import dayjs from '@ilamy/utils/dayjs'
 import { resourceHorizontalRows, ResourcesCornerCell } from './resource-axis'
 import { DayLabel } from '@ilamy/ui/components/day-label'
+import { calculateViewportWidth, calculateVirtualizeIndex, calculateLeftPadding, useVirtualize } from '@/lib/utils/optimize'
+import { useState, useRef, useEffect } from 'react'
 
 const getTimelineRange = (
 	date: Dayjs,
@@ -14,9 +16,11 @@ const getTimelineRange = (
 			end: config.resourceTimelineRange.end.endOf('day'),
 		}
 	}
+  
+	const start = date.startOf('month')
+  const end = start.add(12, 'month')
 
-	const start = date.startOf('year')
-	return { start, end: start.endOf('year') }
+  return { start, end }
 }
 
 const getTimelineDays = (
@@ -28,10 +32,56 @@ const getTimelineDays = (
 	return Array.from({ length: daysInRange }, (_, i) => start.add(i, 'day'))
 }
 
+const VirtualizedYearHeader = ({ date, config }: { date: Dayjs; config: ViewConfig }) => {
+  const days = getTimelineDays(date, config)
+
+  const COLUMN_WIDTH = 80
+  const OVERSCAN = 5 // Slightly higher overscan buffers the edges so scrolling feels smoother
+
+  const viewportRef = useRef<HTMLDivElement | null>(null)
+
+  const { startIndex, endIndex, leftPadding, rightPadding } = useVirtualize(
+    () => viewportRef.current?.closest('[data-slot="scroll-area-viewport"]'), 
+    viewportRef, 
+    COLUMN_WIDTH, 
+    OVERSCAN, 
+    days.length
+  )
+
+  const slicedDays = days.slice(startIndex, endIndex)
+  return (
+    <>
+      <ResourcesCornerCell />
+      <div 
+        ref={viewportRef} 
+        className='flex flex-row flex-1 overflow-hidden'
+      >
+        <div style={{ width: leftPadding, height: 40, flexShrink: 0 }} />
+        
+        {slicedDays.map((day) => (
+          <div
+            key={day.format('YYYY-MM-DD')}
+            className="w-20 border-b border-r shrink-0 flex items-center justify-center flex-col"
+          >
+            <DayLabel
+              today={day.isSame(dayjs(), 'day')}
+              className="flex-col-reverse"
+              dayNumber={day.format('D')}
+              weekday={day.format('MMM')}
+            />
+          </div>
+        ))}
+
+        <div style={{ width: rightPadding, height: 40, flexShrink: 0 }} />
+      </div>
+    </>
+  )
+}
+
 export const resourceYearView: PluginView = {
 	name: 'resourceYear',
 	label: 'Yearly Timeline',
-	icon: Grid2x2,
+	icon: PanelsTopLeft,
 	navigationUnit: 'year',
 	layout: 'horizontal',
 	supportsResources: true,
@@ -44,24 +94,6 @@ export const resourceYearView: PluginView = {
 		})
 	},
 	renderHeader: ({ date, config }) => {
-		const days = getTimelineDays(date, config)
-		return (
-			<>
-				<ResourcesCornerCell />
-				{days.map((day) => (
-					<div
-						key={day.format('YYYY-MM-DD')}
-						className="w-20 border-b border-r shrink-0 flex items-center justify-center flex-col"
-					>
-						<DayLabel
-							today={day.isSame(dayjs(), 'day')}
-							className="flex-col-reverse"
-							dayNumber={day.format('D')}
-							weekday={day.format('MMM')}
-						/>
-					</div>
-				))}
-			</>
-		)
-	},
+    return <VirtualizedYearHeader date={date} config={config} />
+  }
 }

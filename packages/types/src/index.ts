@@ -55,6 +55,7 @@ export interface CalendarEvent {
 	 * @example { meetingType: 'standup', attendees: ['john', 'jane'] }
 	 */
 	data?: Record<string, unknown>
+	isRule?: boolean
 }
 
 /**
@@ -234,7 +235,7 @@ export interface HorizontalRowSpec {
 	/** Resource-axis identity when the row belongs to one resource. */
 	resource?: Resource
 	/** When `'group-header'`, this row is a collapsible resource group label. */
-	rowKind?: 'group-header' | 'resource'
+	rowKind?: 'group-header' | 'resource' | 'rule-resource'
 	/** Group metadata when `rowKind` is `'group-header'`. */
 	resourceGroup?: { id: string | number; title: string }
 }

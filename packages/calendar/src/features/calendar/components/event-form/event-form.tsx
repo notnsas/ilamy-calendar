@@ -243,6 +243,7 @@ export const EventForm: React.FC<EventFormProps> = ({
 		if (selectedEventId) {
 			onUpdate?.(eventData)
 		} else {
+			// console.log('add new stuff geys')
 			onAdd?.(eventData)
 		}
 		onClose()

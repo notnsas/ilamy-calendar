@@ -7,7 +7,14 @@ import type {
 	ViewConfig,
 } from '@ilamy/types'
 import { DayLabel } from '@ilamy/ui/components/day-label'
-import { Grid3x3 } from 'lucide-react'
+import {
+  Grid2x2,
+  Grid3x3,
+  Grid,
+  LayoutGrid,
+  type LucideIcon,
+	type LucideProps,
+} from 'lucide-react'
 import type React from 'react'
 import { AnimatedSection } from '@/components/animations/animated-section'
 import { gutterColumn } from '@/components/vertical-grid/gutter'
@@ -29,9 +36,10 @@ import {
 
 const resourceMonthVerticalColumns = (
 	date: Dayjs,
-	resources: Resource[]
+	resources: Resource[],
+	numOfMonths: number = 1
 ): VerticalColumnSpec[] => {
-	const daysInMonth = getMonthDays(date)
+	const daysInMonth = getMonthDays(date, numOfMonths)
 	return resourceVerticalColumns({
 		resources,
 		gutter: gutterColumn({
@@ -55,8 +63,9 @@ const resourceMonthVerticalColumns = (
 	})
 }
 
-const ResourceMonthHorizontalHeader: React.FC<{ date: Dayjs }> = ({ date }) => {
-	const monthDays = getMonthDays(date)
+const ResourceMonthHorizontalHeader: React.FC<{ date: Dayjs; numOfMonths: number }> = ({ date, numOfMonths }) => {
+	const monthDays = getMonthDays(date, numOfMonths)
+	const weekdayFormat = numOfMonths > 1 ? 'MMM' : 'ddd'
 
 	return (
 		<>
@@ -76,7 +85,7 @@ const ResourceMonthHorizontalHeader: React.FC<{ date: Dayjs }> = ({ date }) => {
 							className="flex-col-reverse"
 							dayNumber={day.format('D')}
 							today={today}
-							weekday={day.format('ddd')}
+							weekday={day.format(weekdayFormat)}
 						/>
 					</AnimatedSection>
 				)
@@ -87,17 +96,18 @@ const ResourceMonthHorizontalHeader: React.FC<{ date: Dayjs }> = ({ date }) => {
 
 const monthRows = (
 	date: Dayjs,
-	config: ViewConfig
+	config: ViewConfig,
+	numOfMonths: number = 1
 ): VerticalColumnSpec[] | HorizontalRowSpec[] => {
 	const resources = config.resources ?? []
 
 	if (resources.length) {
 		if (config.orientation === 'vertical') {
-			return resourceMonthVerticalColumns(date, resources)
+			return resourceMonthVerticalColumns(date, resources, numOfMonths)
 		}
 		return resourceHorizontalRows({
 			resources,
-			days: getMonthDays(date),
+			days: getMonthDays(date, numOfMonths),
 			gridType: 'day',
 		})
 	}
@@ -115,23 +125,51 @@ const monthRows = (
 	}))
 }
 
-export const monthView: PluginView = {
-	name: 'month',
-	label: 'month',
-	icon: Grid3x3,
-	navigationUnit: 'month',
-	layout: 'horizontal',
-	supportsResources: true,
-	range: (date, config) => getMonthGridRange(date, config.firstDayOfWeek),
-	columns: monthRows,
-	renderHeader: ({ date, config }) => {
-		const resources = config.resources ?? []
-		if (!resources.length) {
-			return <MonthHeader className="h-12" />
+export const monthView = (numOfMonths: number): PluginView => {
+
+	const names: Record<number, string> = {
+		1: 'month',
+		2: 'two-month',
+		3: 'three-month',
+		6: 'six-month',
+	}
+
+	const labels: Record<number, string> = {
+		1: 'Month',
+		2: 'Two Months',
+		3: 'Three Months',
+		6: 'Six Months',
+	}
+
+	const icons: Record<number, LucideIcon> = {
+		1: Grid3x3,
+		2: Grid2x2,
+		3: LayoutGrid,
+		6: Grid,
+	}
+	
+	const name = names[numOfMonths] ?? 'multi-month'
+	const label = labels[numOfMonths] ?? `${numOfMonths} Months`
+	const icon = icons[numOfMonths] ?? Grid3x3
+
+	return {
+		name,
+		label,
+		icon,
+		navigationUnit: 'month',
+		layout: 'horizontal',
+		supportsResources: true,
+		range: (date, config) => getMonthGridRange(date, config.firstDayOfWeek),
+		columns: (date, config) => monthRows(date, config, numOfMonths),
+		renderHeader: ({ date, config }) => {
+			const resources = config.resources ?? []
+			if (!resources.length) {
+				return <MonthHeader className="h-12" />
+			}
+			if (config.orientation === 'vertical') {
+				return <ResourceColumnsHeader resources={resources} />
+			}
+			return <ResourceMonthHorizontalHeader date={date} numOfMonths={numOfMonths} />
 		}
-		if (config.orientation === 'vertical') {
-			return <ResourceColumnsHeader resources={resources} />
-		}
-		return <ResourceMonthHorizontalHeader date={date} />
-	},
+	}
 }

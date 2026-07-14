@@ -78,6 +78,7 @@ export interface CalendarDataSlice {
 		resourceId: string | number | undefined
 	) => Resource | undefined
 	isEventCrossResource: (event: CalendarEvent) => boolean
+	getResourceGroupId: () => (string | number)[]
 }
 
 /** Data slice: event store, prop sync, CRUD, and plugin-scoped mutations. */
@@ -92,7 +93,7 @@ export const useCalendarData = ({
 }: CalendarDataParams): CalendarDataSlice => {
 	const [currentEvents, setCurrentEvents] = useState<CalendarEvent[]>(events)
 	const lastEventsProp = useRef(events)
-
+	// console.log('currentEvents:', currentEvents) // Debugging log
 	const getEventsForDateRange = useCallback(
 		(startDate: Dayjs, endDate: Dayjs): CalendarEvent[] =>
 			pluginRuntime.transformEvents(currentEvents, {
@@ -116,7 +117,9 @@ export const useCalendarData = ({
 
 	const addEvent = useCallback(
 		(event: CalendarEvent) => {
+			// console.log('Addingosmetign')
 			setCurrentEvents((prev) => [...prev, event])
+			// console.log('event add', event)
 			onEventAdd?.(event)
 		},
 		[onEventAdd]
@@ -125,14 +128,22 @@ export const useCalendarData = ({
 	const updateEvent = useCallback(
 		(eventId: string | number, updates: Partial<CalendarEvent>) => {
 			const eventToUpdate = currentEvents.find((event) => event.id === eventId)
+			console.log('eventToUpdate', eventToUpdate)
 			if (!eventToUpdate) {
 				return
 			}
 
 			const newEvent = { ...eventToUpdate, ...updates }
+			console.log('newEvent', newEvent)
 			setCurrentEvents((prev) =>
-				prev.map((event) => (event.id === eventId ? newEvent : event))
+				prev.map((event) => {
+					console.log('event in map', event)
+					console.log('event.id', event.id)
+					console.log('eventId', eventId)
+					return (event.id === eventId ? newEvent : event)
+				})
 			)
+			console.log('currentEvents after update', currentEvents)
 			onEventUpdate?.(newEvent)
 		},
 		[currentEvents, onEventUpdate]
@@ -223,7 +234,21 @@ export const useCalendarData = ({
 			if (resourceId === undefined) {
 				return undefined
 			}
+			// console.log('getResourceById resourceId:', resourceId) // Debugging log
+			// console.log('getResourceById resources:', resources) // Debugging log
 			return resources.find((resource) => resource.id === resourceId)
+		},
+		[resources]
+	)
+
+	const getResourceGroupId = useCallback(
+		(): (string | number)[] => {
+			const resourceGroupIds = resources
+				.map(resource => resource.groupId)
+				.filter((groupId): groupId is string => groupId !== undefined)
+			const uniqueGroupIds = [...new Set(resourceGroupIds)]
+			 
+			return uniqueGroupIds  
 		},
 		[resources]
 	)
@@ -247,6 +272,7 @@ export const useCalendarData = ({
 			getEventsForResources,
 			getResourceById,
 			isEventCrossResource,
+			getResourceGroupId
 		}),
 		[
 			processedEvents,
@@ -261,6 +287,7 @@ export const useCalendarData = ({
 			getEventsForResources,
 			getResourceById,
 			isEventCrossResource,
+			getResourceGroupId
 		]
 	)
 }

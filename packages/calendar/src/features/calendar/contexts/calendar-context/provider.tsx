@@ -138,6 +138,9 @@ const useCalendarContextValue = (
 		resourceTimelineRange,
 	} = props
 
+	// console.log('events', events)
+	// console.log('onCellClick', onCellClick)
+
 	const engine = useCalendarEngine({
 		events,
 		firstDayOfWeek,
@@ -164,7 +167,7 @@ const useCalendarContextValue = (
 		weekViewGranularity,
 		resourceTimelineRange,
 	})
-
+	// console.log('engine', engine)
 	return useMemo(() => {
 		// The engine returns the context core plus the two click handlers; the
 		// handlers are destructured OFF so the spread below keeps the exact v1
@@ -237,7 +240,7 @@ export const CalendarProvider: React.FC<CalendarProviderProps> = ({
 	...props
 }) => {
 	const contextValue = useCalendarContextValue(props)
-
+	// console.log('CalendarProvider contextValue:', contextValue) // Debugging log
 	const wrappedChildren = composePluginProviders(
 		contextValue.getProviders(),
 		children

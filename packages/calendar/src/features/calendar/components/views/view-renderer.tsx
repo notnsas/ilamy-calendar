@@ -87,6 +87,7 @@ const VerticalEngineView: React.FC<
 const HorizontalEngineView: React.FC<
 	EngineViewProps & { specs: HorizontalRowSpec[] }
 > = ({ specs, header, composesResourceAxis, variant }) => {
+	// console.log('HorizontalEngineView specs:', specs) // Debugging log
 	const gridType = specs.some((row) =>
 		row.columns?.some((cell) => cell.gridType === 'hour')
 	)
@@ -175,11 +176,17 @@ export const ViewRenderer: React.FC<{ view: PluginView }> = ({ view }) => {
 		[view, currentDate, config]
 	)
 
+	// console.log('ViewRenderer specs:', specs) // Debugging log
+	// console.log('ViewRenderer view:', view) // Debugging log
+	// console.log('ViewRenderer config:', config) // Debugging log
+	// console.log('ViewRenderer currentDate:', currentDate) // Debugging log
+	// console.log('ViewRenderer viewcolumns:', view.columns?.(currentDate, config)) // Debugging log
+
 	if (!specs || !view.layout) {
-		const EscapeHatch = view.component
-		if (EscapeHatch) {
-			return <EscapeHatch />
-		}
+		// const EscapeHatch = view.component
+		// if (EscapeHatch) {
+		// 	return <EscapeHatch />
+		// }
 		// Guarded `typeof process` check: the published bundle ships this line
 		// as-is, so bundler-less ESM consumers must not crash on bare `process`.
 		const isDevBuild =

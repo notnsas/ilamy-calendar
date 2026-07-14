@@ -76,21 +76,29 @@ const computeColumnSpan = (
 type OccupancyGrid = boolean[][]
 
 /** First row where every column from startCol..endCol is free; -1 if none. */
+const eventsOverlap = (
+	a: CalendarEvent,
+	b: CalendarEvent
+): boolean => {
+	// console.log({ a, b })
+
+	return a.start.isBefore(b.end) && a.end.isAfter(b.start)
+}
+
 const findAvailableRow = (
-	grid: OccupancyGrid,
-	startCol: number,
-	endCol: number
+	rows: CalendarEvent[][],
+	event: CalendarEvent
 ): number => {
-	for (let row = 0; row < grid.length; row++) {
-		let canPlace = true
-		for (let col = startCol; col <= endCol; col++) {
-			if (grid[row][col]) {
-				canPlace = false
-				break
-			}
+	for (let row = 0; row < rows.length; row++) {
+		const hasOverlap = rows[row].some(existing =>
+			eventsOverlap(existing, event)
+		)
+
+		if (!hasOverlap) {
+			return row
 		}
-		if (canPlace) return row
 	}
+
 	return -1
 }
 
@@ -128,12 +136,24 @@ export const layoutHorizontal = ({
 		gridType
 	)
 
-	// dayMaxEvents x unitCount occupancy grid.
-	const grid: OccupancyGrid = Array.from({ length: dayMaxEvents }, () =>
-		Array.from({ length: bounds.unitCount }, () => false)
+	const rows: CalendarEvent[][] = Array.from(
+		{ length: dayMaxEvents },
+		() => []
 	)
 
+
+
 	const placedEvents: HorizontalPositionedEvent[] = []
+
+	const dayFraction = (date: Dayjs) => {
+		const ms =
+			date.hour() * 3_600_000 +
+			date.minute() * 60_000 +
+			date.second() * 1_000 +
+			date.millisecond()
+
+		return ms / 86_400_000
+	}
 
 	const place = ({
 		row,
@@ -143,15 +163,17 @@ export const layoutHorizontal = ({
 		isTruncatedStart,
 		isTruncatedEnd,
 	}: PlaceArgs) => {
-		for (let col = startCol; col <= endCol; col++) {
-			grid[row][col] = true
-		}
-		const spanUnits = endCol - startCol + 1
+
+		const startPos = startCol + dayFraction(event.start)
+		const endPos = endCol + dayFraction(event.end)
+
+		rows[row].push(event)
+
 		placedEvents.push({
 			kind: 'horizontal',
 			event,
-			left: (startCol / bounds.unitCount) * 100,
-			width: (spanUnits / bounds.unitCount) * 100,
+			left: (startPos / bounds.unitCount) * 100,
+			width: ((endPos - startPos) / bounds.unitCount) * 100,
 			row,
 			isTruncatedStart,
 			isTruncatedEnd,
@@ -163,7 +185,7 @@ export const layoutHorizontal = ({
 		const span = computeColumnSpan(event, bounds)
 
 		// First try: place from the original start position.
-		const row = findAvailableRow(grid, span.startCol, span.endCol)
+		const row = findAvailableRow(rows, event)
 		if (row !== -1) {
 			place({ row, event, ...span })
 			continue
@@ -175,7 +197,7 @@ export const layoutHorizontal = ({
 			tryStart <= span.endCol;
 			tryStart++
 		) {
-			const truncRow = findAvailableRow(grid, tryStart, span.endCol)
+			const truncRow = findAvailableRow(rows, event)
 			if (truncRow !== -1) {
 				place({
 					row: truncRow,
@@ -195,7 +217,7 @@ export const layoutHorizontal = ({
 	for (const event of sortedSingleUnit) {
 		const span = computeColumnSpan(event, bounds)
 		const col = span.startCol
-		const row = findAvailableRow(grid, col, col)
+		const row = findAvailableRow(rows, event)
 		if (row !== -1) {
 			place({
 				row,

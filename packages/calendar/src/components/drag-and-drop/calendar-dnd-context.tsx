@@ -29,7 +29,6 @@ export function CalendarDndContext({ children }: CalendarDndContextProps) {
 	const dragOverlayRef = useRef<{
 		setActiveEvent: (event: CalendarEvent | null) => void
 	}>(null)
-
 	const { updateEvent, getEventManager, disableDragAndDrop } =
 		useSmartCalendarContext((context) => ({
 			updateEvent: context.updateEvent,
@@ -63,6 +62,7 @@ export function CalendarDndContext({ children }: CalendarDndContextProps) {
 		event: CalendarEvent,
 		updates: Partial<CalendarEvent>
 	) => {
+		 
 		const hasNoUpdates = !updates || Object.keys(updates).length === 0
 		if (!event?.id || hasNoUpdates) {
 			return
@@ -79,6 +79,7 @@ export function CalendarDndContext({ children }: CalendarDndContextProps) {
 	}
 
 	const handleDragStart = (event: DragStartEvent) => {
+		 
 		const { active } = event
 
 		// Set the active event based on the event data
@@ -89,6 +90,7 @@ export function CalendarDndContext({ children }: CalendarDndContextProps) {
 	}
 
 	const handleDragEnd = (event: DragEndEvent) => {
+		 
 		const updatedEvent = getUpdatedEvent(event, activeEventRef.current)
 		if (updatedEvent) {
 			const { activeEvent, updates } = updatedEvent

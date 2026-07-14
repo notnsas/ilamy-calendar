@@ -121,7 +121,7 @@ Use conventional commit prefixes for consistency and automated tooling:
 // ✅ CORRECT: Strict iCalendar compliance for modified instances
 if (targetEvent.recurrenceId) {
   // This is a modified instance - handle accordingly
-  console.log('Processing modified recurring instance')
+   // console.log('Processing modified recurring instance')
 }
 
 // Find base event by UID and RRULE presence (with fallback UID generation)

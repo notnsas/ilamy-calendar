@@ -51,38 +51,66 @@ const buildDayColumns = (
  * before the first resource in each `groupId` cluster.
  */
 export const buildGroupedResourceRows = (
-	resources: Resource[],
-	columns: HorizontalCellSpec[]
+  resources: Resource[],
+  columns: HorizontalCellSpec[]
 ): HorizontalRowSpec[] => {
-	const rows: HorizontalRowSpec[] = []
-	const insertedGroups = new Set<string>()
+  const rows: HorizontalRowSpec[] = []
+  const insertedGroups = new Set<string>()
 
-	for (const resource of resources) {
-		if (resource.groupId != null) {
-			const groupKey = String(resource.groupId)
-			if (!insertedGroups.has(groupKey)) {
-				insertedGroups.add(groupKey)
-				rows.push({
-					id: keys.resourceGroup.header(resource.groupId),
-					rowKind: 'group-header',
-					resourceGroup: {
-						id: resource.groupId,
-						title: resource.groupTitle ?? groupKey,
-					},
-					columns,
-				})
-			}
-		}
+  for (const resource of resources) {
+    // Skip the engine's price rows in the main loop so they don't double-render at the bottom
+    if (resource.data?.isRuleResource) {
+      continue
+    }
 
-		rows.push({
-			id: String(resource.id),
-			rowKind: 'resource',
-			resource,
-			columns,
-		})
-	}
+    if (resource.groupId != null) {
+      const groupKey = String(resource.groupId)
+      
+      if (!insertedGroups.has(groupKey)) {
+        insertedGroups.add(groupKey)
+        
+        // 1. EXACT SAME group header
+        rows.push({
+          id: keys.resourceGroup.header(resource.groupId),
+          rowKind: 'group-header',
+          resourceGroup: {
+            id: resource.groupId,
+            title: resource.groupTitle ?? groupKey,
+          },
+          columns,
+        })
 
-	return rows
+        // Find the engine-provided price resource for this group
+        const enginePriceResource = resources.find(
+          (r) => r.groupId === resource.groupId && r.data?.isRuleResource
+        )
+
+        // 2. EXACT SAME rule-resource structure as your commented out code
+        if (enginePriceResource) {
+          rows.push({
+            id: keys.resourceGroup.rule(resource.id),
+            rowKind: 'rule-resource',
+            resourceGroup: {
+              id: resource.groupId,
+              title: resource.groupTitle ?? groupKey,
+            },
+            resource: enginePriceResource, // <--- Using the engine resource here
+            columns,
+          })
+        }
+      }
+    }
+
+    // 3. Normal resource row
+    rows.push({
+      id: String(resource.id),
+      rowKind: 'resource',
+      resource,
+      columns,
+    })
+  }
+
+  return rows
 }
 
 /**
@@ -96,6 +124,8 @@ export const resourceHorizontalRows = ({
 	cellClassName,
 }: ResourceHorizontalRowsOptions): HorizontalRowSpec[] => {
 	const columns = buildDayColumns(days, gridType, cellClassName)
+	// console.log('resourceHorizontalRows columns:', columns) // Debugging log
+	// console.log('buildGroupedResourceRows(resources, columns) rows:', buildGroupedResourceRows(resources, columns)) // Debugging log
 	return buildGroupedResourceRows(resources, columns)
 }
 

@@ -32,7 +32,8 @@ export function getDayKey(date: Dayjs): string {
  */
 export function getWeekDays(
 	currentDate: Dayjs,
-	firstDayOfWeek: number
+	firstDayOfWeek: number,
+	numberOfWeeks: number = 1
 ): Dayjs[] {
 	const startOfWeekFromCurrentDate = currentDate
 		.startOf('week')
@@ -42,7 +43,9 @@ export function getWeekDays(
 		? startOfWeekFromCurrentDate.subtract(1, 'week')
 		: startOfWeekFromCurrentDate
 
-	return Array.from({ length: 7 }, (_, dayIndex) =>
+	const length = 7 * numberOfWeeks
+
+	return Array.from({ length }, (_, dayIndex) =>
 		adjustedStartOfWeek.add(dayIndex, 'day')
 	)
 }
@@ -65,10 +68,18 @@ export function getMonthWeeks(
 	})
 }
 
-export function getMonthDays(monthDate: Dayjs): Dayjs[] {
-	const daysInMonth = monthDate.daysInMonth()
+export function getMonthDays(
+	monthDate: Dayjs, 
+	numOfMonths: number = 1
+): Dayjs[] {
+	let totalDays = 0
+
+	for (let i = 0; i < numOfMonths; i++) {
+		totalDays += monthDate.add(i, 'month').daysInMonth()
+	}
+	
 	const startOfMonth = monthDate.startOf('month')
-	return Array.from({ length: daysInMonth }, (_, i) =>
+	return Array.from({ length: totalDays }, (_, i) =>
 		startOfMonth.add(i, 'day')
 	)
 }

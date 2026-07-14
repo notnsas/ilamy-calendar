@@ -5,6 +5,8 @@ import type React from 'react'
 import { useSmartCalendarContext } from '@/features/calendar/hooks/use-smart-calendar-context'
 import type { CellInfo } from '@/features/calendar/types'
 import { DISABLED_CELL_CLASSNAME } from '@/lib/constants'
+import { RuleDialog } from './rule-dialog'
+import { useState } from 'react'
 
 interface DroppableCellProps {
 	id: string
@@ -18,7 +20,9 @@ interface DroppableCellProps {
 	className?: string
 	style?: React.CSSProperties
 	'data-testid'?: string
-	disabled?: boolean
+	disabled?: boolean,
+	isRuleResource?: boolean
+	onRuleClick?: () => void
 }
 
 /**
@@ -54,6 +58,8 @@ export function DroppableCell({
 	style,
 	'data-testid': dataTestId,
 	disabled = false,
+	isRuleResource,
+	onRuleClick,
 }: DroppableCellProps) {
 	const {
 		onCellClick,
@@ -64,24 +70,37 @@ export function DroppableCell({
 		classesOverride,
 		view,
 	} = useSmartCalendarContext()
-
+	
 	const { start, end } = getCellRange(date, hour, minute)
 	// `getResourceById` is only present on resource calendars; regular calendars resolve to undefined.
 	const resource = getResourceById?.(resourceId)
-	const cellInfo: CellInfo = { start, end, resource, allDay }
+	// console.log('DroppableCell resource:', resource, 'id', resourceId) // Debugging log
+	const cellInfo: CellInfo = { start, end, resource, allDay, isRuleResource }
 
 	// Disabled by business hours (`disabled` prop) or the consumer's predicate.
 	const cellDisabled = disabled || Boolean(isCellDisabled?.(cellInfo))
-	const clickBlocked = disableCellClick || cellDisabled
+	const clickBlocked = disableCellClick || cellDisabled 
 
 	const { isOver, setNodeRef } = useDroppable({
 		id,
-		data: { type, date, hour, minute, resourceId, allDay },
-		disabled: disableDragAndDrop || cellDisabled,
+		data: { type, date, hour, minute, resourceId, allDay, isRuleResource },
+		disabled: disableDragAndDrop || cellDisabled || isRuleResource,
 	})
 
 	const handleCellClick = (e: React.MouseEvent) => {
 		e.stopPropagation()
+		if (isRuleResource && onRuleClick) {
+			// console.log('Aku ke press di rule', resource)
+			// console.log('disableDragAndDrop || cellDisabled || isRuleResource', (disableDragAndDrop || cellDisabled || isRuleResource))
+			onRuleClick()
+			if (cellInfo.resource && resourceId !== undefined) {
+				cellInfo.resource.id = resourceId
+			}
+			console.log('cellInfo', cellInfo)
+			onCellClick(cellInfo)
+			return
+		}
+	
 		if (clickBlocked) {
 			return
 		}

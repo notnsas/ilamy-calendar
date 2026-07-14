@@ -965,7 +965,7 @@ const typedEvent: CalendarEvent = {
 // Type-safe cell click handler
 const handleCellClick = (info: CellInfo) => {
   // CellInfo contains: { start: Dayjs, end: Dayjs, resource?: Resource, allDay?: boolean }
-  console.log('Clicked:', info.start, info.end, info.resource?.id)
+   // console.log('Clicked:', info.start, info.end, info.resource?.id)
 }
 ```
 

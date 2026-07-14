@@ -30,7 +30,11 @@ const NoMemoHorizontalGridEventsLayer: React.FC<
 	positionedEvents,
 	dayNumberHeight = DAY_NUMBER_HEIGHT,
 }) => {
-	const { eventHeight, eventSpacing, resources } = useSmartCalendarContext()
+	const { eventHeight, eventSpacing, resources } = useSmartCalendarContext((ctx) => ({
+        eventHeight: ctx.eventHeight,
+        eventSpacing: ctx.eventSpacing,
+        resources: ctx.resources
+    }))
 	const weekStart = days.at(0)?.startOf('day')
 	// Stacked resource rows share one continuous now-line; only the first resource
 	// (or a non-resource grid) draws the dot at its start, so it isn't repeated.
@@ -58,6 +62,7 @@ const NoMemoHorizontalGridEventsLayer: React.FC<
 					withDot={isFirstResource}
 				/>
 			)}
+			
 			{positionedEvents.map((positioned) => {
 				const { event, row } = positioned
 				// Layout returns the abstract row; the renderer owns the CSS units.

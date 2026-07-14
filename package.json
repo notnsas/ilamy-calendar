@@ -52,6 +52,11 @@
 		"husky": "^9.1.7",
 		"lint-staged": "^16.4.0",
 		"typescript": "^6.0.3",
-		"vite": "^8.0.16"
+		"vite": "^8.0.16",
+		"vite-tsconfig-paths": "^6.1.1"
+	},
+	"dependencies": {
+		"@tanstack/react-virtual": "^3.14.5",
+		"@types/react-window": "^2.0.0"
 	}
 }

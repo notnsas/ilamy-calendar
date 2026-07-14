@@ -6,7 +6,7 @@ import type {
 import { cn } from '@ilamy/ui/lib/utils'
 import type { Dayjs } from '@ilamy/utils/dayjs'
 import type React from 'react'
-import { memo, useMemo, useRef } from 'react'
+import { memo, useMemo, useRef, useState } from 'react'
 import { useSmartCalendarContext } from '@/features/calendar/hooks/use-smart-calendar-context'
 import { useProcessedWeekEvents } from '@/features/calendar/hooks/useProcessedWeekEvents'
 import { getDayKey } from '@/lib/utils/date-utils'
@@ -17,6 +17,7 @@ import { GridCell } from '../grid-cell'
 import { ResourceCell } from '../resource-cell'
 import { ResourceGroupHeaderCell } from '../resource-group-header-cell'
 import { HorizontalGridEventsLayer } from './horizontal-grid-events-layer'
+import { RuleDialog } from '../rule-dialog'
 
 interface HorizontalGridColumn extends HorizontalCellSpec {
 	renderCell?: (row: HorizontalGridRowProps) => React.ReactNode
@@ -29,231 +30,263 @@ export interface HorizontalGridRowProps extends HorizontalRowSpec {
 	columns?: HorizontalGridColumn[]
 	allDay?: boolean
 	isLastRow?: boolean
+	leftPadding?: number
 }
 
 const NoMemoHorizontalGridRow: React.FC<HorizontalGridRowProps> = ({
-	id,
-	resource,
-	resourceGroup,
-	rowKind = 'resource',
-	gridType = 'day',
-	variant = 'resource',
-	dayNumberHeight,
-	className,
-	columns = [],
-	allDay,
-	showDayNumber = false,
-	isLastRow = false,
+  id,
+  resource,
+  resourceGroup,
+  rowKind = 'resource',
+  gridType = 'day',
+  variant = 'resource',
+  dayNumberHeight,
+  className,
+  columns = [],
+  allDay,
+  showDayNumber = false,
+  isLastRow = false,
+  leftPadding = 0,
 }) => {
-	const { renderResource, view } = useSmartCalendarContext((ctx) => ({
-		renderResource: ctx.renderResource,
-		view: ctx.view,
-	}))
+  const { renderResource, view, events } = useSmartCalendarContext((ctx) => ({
+    renderResource: ctx.renderResource,
+    view: ctx.view,
+    events: ctx.events,
+  }))
+  const [isDialogOpen, setDialogOpen] = useState<boolean>(false)
 
-	const isGroupHeader = rowKind === 'group-header' && resourceGroup != null
-	const isResourceCalendar = variant === 'resource'
-	const isYearResourceView = view === 'resourceYear'
-	const compact = isYearResourceView && !isGroupHeader
-	// Flat columns: each column has col.day (regular month, resource month)
-	// Grouped columns: each column has col.days[] (resource week horizontal)
-	const isGrouped = columns.some((col) => col.days)
+  const isGroupHeader = rowKind === 'group-header' && resourceGroup != null
+  const isRuleResource = rowKind === 'rule-resource'
+  const isResourceCalendar = variant === 'resource'
+  const isYearResourceView = view === 'resourceYear'
+  const compact = isYearResourceView && !isGroupHeader
+  const isGrouped = columns.some((col) => col.days)
 
-	const allEventsDialogRef = useRef<{
-		open: () => void
-		close: () => void
-		setSelectedDayEvents: (dayEvents: SelectedDayEvents) => void
-	}>(null)
+  const allEventsDialogRef = useRef<{
+    open: () => void
+    close: () => void
+    setSelectedDayEvents: (dayEvents: SelectedDayEvents) => void
+  }>(null)
 
-	// Collect all days for flat rows
-	const flatDays = useMemo(() => {
-		if (isGrouped || isGroupHeader) return []
-		return columns.map((col) => col.day).filter((d): d is Dayjs => Boolean(d))
-	}, [columns, isGrouped, isGroupHeader])
+  const flatDays = useMemo(() => {
+    if (isGrouped || isGroupHeader) return []
+    return columns.map((col) => col.day).filter((d): d is Dayjs => Boolean(d))
+  }, [columns, isGrouped, isGroupHeader])
 
-	// Compute events once at the row level — shared between GridCells and events layer
-	const { positionedEvents, dayEventsMap } = useProcessedWeekEvents({
-		days: flatDays,
-		gridType,
-		resourceId: resource?.id,
-		allDay,
-	})
+  const { positionedEvents, dayEventsMap } = useProcessedWeekEvents({
+    days: flatDays,
+    gridType,
+    resourceId: resource?.id,
+    allDay,
+  })
+  const ruleEvents = useMemo(() => {
+    if (!isRuleResource) return []
+    return events.filter((event) => event.isRule)
+  }, [events, isRuleResource])
 
-	return (
-		<div
-			className={cn('flex flex-1 relative min-w-0', className)}
-			data-testid={keys.container.horizontal.row(id)}
-		>
-			{isResourceCalendar && isGroupHeader && resourceGroup && (
-				<ResourceGroupHeaderCell
-					className="w-20 sm:w-40"
-					groupId={resourceGroup.id}
-					title={resourceGroup.title}
-				/>
-			)}
-			{isResourceCalendar && !isGroupHeader && resource && (
-				<ResourceCell
-					className="w-20 sm:w-40 sticky left-0 bg-background z-20 h-full"
-					data-testid={keys.container.horizontal.rowLabel(resource.id)}
-					resource={resource}
-				>
-					{renderResource ? (
-						renderResource(resource)
-					) : (
-						<div className="wrap-break-word text-sm">{resource.title}</div>
-					)}
-				</ResourceCell>
-			)}
-			<div className="relative flex-1 flex min-w-0">
-				<div className="flex w-full min-w-0">
-					{isGroupHeader
-						? columns.map((col, index) => (
-								<div
-									className={cn(
-										'flex-1 w-20 border-r border-b min-h-8 bg-muted/40',
-										isLastRow && 'border-b-0',
-										col.className
-									)}
-									key={col.id}
-								/>
-							))
-						: columns.map((col, index) => {
-								if (col.days) {
-									return (
-										<GroupedColumn
-											allDay={allDay}
-											col={col}
-											compact={compact}
-											dayNumberHeight={dayNumberHeight}
-											gridType={gridType}
-											id={id}
-											isLastCol={index === columns.length - 1}
-											isLastRow={isLastRow}
-											key={col.id}
-											resource={resource}
-											resourceId={resource?.id}
-											showDayNumber={showDayNumber}
-										/>
-									)
-								}
+  // console.log('HorizontalGridRow resource:', resource) // Debugging log
+  // console.log('HorizontalGridRow positionedEvents:', positionedEvents) // Debugging log
+  console.log('HorizontalGridRow events:', events) // Debugging log
+  // console.log('HorizontalGridRow ruleEvents:', ruleEvents) // Debugging log
 
-								return col.day ? (
-									<GridCell
-										allDay={allDay}
-										allEventsDialogRef={allEventsDialogRef}
-										className={cn(
-											'flex-1 w-20',
-											isLastRow && 'border-b-0',
-											col.className
-										)}
-										compact={compact}
-										day={col.day}
-										gridType={gridType}
-										hour={gridType === 'hour' ? col.day.hour() : undefined}
-										key={col.day.toISOString()}
-										precomputedEvents={dayEventsMap.get(getDayKey(col.day))}
-										resourceId={resource?.id}
-										showDayNumber={showDayNumber}
-										suppressEventsDialog
-									/>
-								) : null
-							})}
-				</div>
+  return (
+    <div
+      // FIX 1: Removed flex-1 so the row cannot stretch. Forced strict 30px limits.
+      className={cn('flex relative min-w-0 h-[30px]! min-h-[30px]! max-h-[30px]!', className)}
+      data-testid={keys.container.horizontal.row(id)}
+    >
+      {isResourceCalendar && isGroupHeader && resourceGroup && (
+        <ResourceGroupHeaderCell
+          className="w-20 sm:w-40 h-[30px]! min-h-[30px]! p-0! overflow-hidden"
+          groupId={resourceGroup.id}
+          title={resourceGroup.title}
+        />
+      )}
+      <RuleDialog
+        isOpen={isDialogOpen}
+        onClose={() => setDialogOpen(false)}
+        onSubmit={(val) => {
+          // console.log('Price set to:', val)
+          setDialogOpen(false)
+        }}
+        title="Set Price"
+        description="Enter the rate for this specific date."
+        label="Price amount"
+        prefix="$"
+        placeholder="0.00"
+      />
+      {(isResourceCalendar && !isGroupHeader && resource) && (
+        <ResourceCell
+          className="w-20 sm:w-40 sticky left-0 bg-background z-20 h-[30px]! min-h-[30px]! p-0! overflow-hidden"
+          data-testid={keys.container.horizontal.rowLabel(resource.id)}
+          resource={resource}
+        >
+          {renderResource ? (
+            renderResource(resource)
+          ) : (
+            <div className="wrap-break-word text-sm">{resource.title}</div>
+          )}
+        </ResourceCell>
+      )}
+      <div
+        style={{
+            width: leftPadding,
+            height: 5, // Exact 30px spacer
+            flexShrink: 0,
+        }}
+      />
+      {/* FIX 2: Forced the inner wrapper to exactly 30px */}
+      <div className="relative flex-1 flex min-w-0 h-[30px]!">
+        <div className="flex w-full min-w-0 h-[30px]!">
+          
+          {isGroupHeader
+            ? columns.map((col, index) => (
+                <div
+                  className={cn(
+                    'flex-1 w-20 border-r border-b bg-muted/40 h-[30px]! min-h-[30px]! p-0!',
+                    isLastRow && 'border-b-0',
+                    col.className
+                  )}
+                  key={col.id}
+                />
+              ))
+            : columns.map((col, index) => {
+                if (col.days) {
+                  return (
+                    <GroupedColumn
+                      allDay={allDay}
+                      col={col}
+                      compact={true} // Forced compact
+                      dayNumberHeight={dayNumberHeight}
+                      gridType={gridType}
+                      id={id}
+                      isLastCol={index === columns.length - 1}
+                      isLastRow={isLastRow}
+                      key={col.id}
+                      resource={resource}
+                      resourceId={resource?.id}
+                      showDayNumber={showDayNumber}
+                    />
+                  )
+                }
 
-				{/* Events layer positioned absolutely over the row */}
-				{!isGrouped && !isGroupHeader && (
-					<div className="absolute inset-0 z-10 pointer-events-none">
-						<HorizontalGridEventsLayer
-							data-testid={keys.container.eventsLayer('horizontal', id)}
-							dayNumberHeight={dayNumberHeight}
-							days={flatDays}
-							gridType={gridType}
-							positionedEvents={positionedEvents}
-							resource={resource}
-							resourceId={resource?.id}
-						/>
-					</div>
-				)}
-			</div>
-			{!isGroupHeader && <AllEventDialog ref={allEventsDialogRef} />}
-		</div>
-	)
+                return col.day ? (
+                  <GridCell
+                    allDay={allDay}
+                    allEventsDialogRef={allEventsDialogRef}
+                    className={cn(
+                      'flex-1 w-20 h-[30px]! min-h-[30px]! p-0!',
+                      isLastRow && 'border-b-0',
+                      col.className
+                    )}
+                    compact={true} // Forced compact
+                    day={col.day}
+                    gridType={gridType}
+                    hour={gridType === 'hour' ? col.day.hour() : undefined}
+                    key={col.day.toISOString()}
+                    precomputedEvents={dayEventsMap.get(getDayKey(col.day))}
+                    resourceId={resource?.id}
+                    showDayNumber={showDayNumber}
+                    isRuleResource={isRuleResource}
+                    onRuleClick={() => setDialogOpen(true)}
+                    ruleEvents={ruleEvents}
+                    suppressEventsDialog
+                  />
+                ) : null
+              })}
+        </div>
+
+        {!isGrouped && !isGroupHeader && (
+          <div className="absolute inset-0 z-10 pointer-events-none h-[30px]!">
+            <HorizontalGridEventsLayer
+              data-testid={keys.container.eventsLayer('horizontal', id)}
+              dayNumberHeight={dayNumberHeight}
+              days={flatDays}
+              gridType={gridType}
+              positionedEvents={positionedEvents}
+              resource={resource}
+              resourceId={resource?.id}
+            />
+          </div>
+        )}
+      </div>
+      {!isGroupHeader && <AllEventDialog ref={allEventsDialogRef} />}
+    </div>
+  )
 }
 
-/**
- * A column containing multiple days (e.g., one day's hourly slots in resource week view).
- * Needs its own useProcessedWeekEvents call since events are scoped to this day group.
- */
 const GroupedColumn = memo(
-	({
-		col,
-		gridType = 'day',
-		allDay,
-		resource,
-		resourceId,
-		dayNumberHeight,
-		showDayNumber,
-		isLastRow,
-		isLastCol,
-		id,
-		compact,
-	}: {
-		col: HorizontalGridColumn
-		gridType?: 'day' | 'hour'
-		allDay?: boolean
-		resource?: Resource
-		resourceId?: string | number
-		dayNumberHeight?: number
-		showDayNumber: boolean
-		isLastRow: boolean
-		isLastCol: boolean
-		id: string | number
-		compact?: boolean
-	}) => {
-		const days = col.days ?? []
-		const { positionedEvents } = useProcessedWeekEvents({
-			days,
-			gridType,
-			resourceId,
-			allDay,
-		})
+  ({
+    col,
+    gridType = 'day',
+    allDay,
+    resource,
+    resourceId,
+    dayNumberHeight,
+    showDayNumber,
+    isLastRow,
+    isLastCol,
+    id,
+    compact,
+  }: {
+    col: HorizontalGridColumn
+    gridType?: 'day' | 'hour'
+    allDay?: boolean
+    resource?: Resource
+    resourceId?: string | number
+    dayNumberHeight?: number
+    showDayNumber: boolean
+    isLastRow: boolean
+    isLastCol: boolean
+    id: string | number
+    compact?: boolean
+  }) => {
+    const days = col.days ?? []
+    const { positionedEvents } = useProcessedWeekEvents({
+      days,
+      gridType,
+      resourceId,
+      allDay,
+    })
 
-		return (
-			<div className="flex relative w-full">
-				<div className="flex w-full">
-					{days.map((day) => (
-						<GridCell
-							allDay={allDay}
-							className={cn(
-								'flex-1 w-20',
-								isLastRow && 'border-b-0',
-								!isLastCol && 'border-r!',
-								col.className
-							)}
-							compact={compact}
-							day={day}
-							gridType={gridType}
-							hour={gridType === 'hour' ? day.hour() : undefined}
-							key={day.toISOString()}
-							resourceId={resourceId}
-							showDayNumber={showDayNumber}
-						/>
-					))}
-				</div>
+    return (
+      // FIX 3: Lock the grouped columns to 30px so they don't stretch
+      <div className="flex relative w-full h-[30px]!">
+        <div className="flex w-full h-[30px]!">
+          {days.map((day) => (
+            <GridCell
+              allDay={allDay}
+              className={cn(
+                'flex-1 w-20 h-[30px]! min-h-[30px]! p-0!',
+                isLastRow && 'border-b-0',
+                !isLastCol && 'border-r!',
+                col.className
+              )}
+              compact={true} // Forced compact
+              day={day}
+              gridType={gridType}
+              hour={gridType === 'hour' ? day.hour() : undefined}
+              key={day.toISOString()}
+              resourceId={resourceId}
+              showDayNumber={showDayNumber}
+            />
+          ))}
+        </div>
 
-				<div className="absolute inset-0 z-10 pointer-events-none">
-					<HorizontalGridEventsLayer
-						data-testid={keys.container.eventsLayer('horizontal', id)}
-						dayNumberHeight={dayNumberHeight}
-						days={days}
-						gridType={gridType}
-						positionedEvents={positionedEvents}
-						resource={resource}
-						resourceId={resourceId}
-					/>
-				</div>
-			</div>
-		)
-	}
+        <div className="absolute inset-0 z-10 pointer-events-none h-[30px]!">
+          <HorizontalGridEventsLayer
+            data-testid={keys.container.eventsLayer('horizontal', id)}
+            dayNumberHeight={dayNumberHeight}
+            days={days}
+            gridType={gridType}
+            positionedEvents={positionedEvents}
+            resource={resource}
+            resourceId={resourceId}
+          />
+        </div>
+      </div>
+    )
+  }
 )
 
 export const HorizontalGridRow = memo(NoMemoHorizontalGridRow)

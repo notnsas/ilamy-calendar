@@ -174,13 +174,16 @@ function ResourceCalendar({
 		<IlamyCalendar
 			businessHours={shared.businessHours}
 			classesOverride={shared.classesOverride}
-			dayMaxEvents={shared.dayMaxEvents}
+			// dayMaxEvents={shared.dayMaxEvents}
 			disableCellClick={shared.disableCellClick}
 			disableDragAndDrop={shared.disableDragAndDrop}
 			disableEventClick={shared.disableEventClick}
-			eventHeight={shared.eventHeight}
+			// eventHeight={shared.eventHeight}
 			eventSpacing={shared.eventSpacing}
 			events={resourceEvents}
+			weekViewGranularity="daily"
+			dayMaxEvents={1}
+			eventHeight={20} 
 			firstDayOfWeek={shared.firstDayOfWeek}
 			headerComponent={shared.headerComponent}
 			hiddenDays={shared.hiddenDays}
@@ -209,7 +212,7 @@ function ResourceCalendar({
 			stickyViewHeader={shared.stickyViewHeader}
 			timeFormat={shared.timeFormat}
 			timezone={shared.timezone}
-			weekViewGranularity={weekViewGranularity}
+			// weekViewGranularity={weekViewGranularity}
 		/>
 	)
 }
@@ -344,8 +347,8 @@ export function CalendarDisplay({
 			</CardHeader>
 
 			<CardContent
-				className="p-0 overflow-clip relative z-10"
-				style={{ height: values.calendarHeight }}
+				className="p-0 overflow-clip relative z-10 h-fit"
+				// style={{ height: values.calendarHeight }}
 			>
 				{values.calendarType === 'regular' && (
 					<RegularCalendar

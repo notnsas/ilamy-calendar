@@ -1,5 +1,12 @@
 {
 	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"paths": {
+			"@ilamy/ui/components/*": ["./src/components/*"],
+			"@ilamy/ui/lib/*": ["./src/lib/*"],
+			"@ilamy/ui/hooks/*": ["./src/hooks/*"]
+		}
+	},
 	"include": ["src/**/*.ts", "src/**/*.tsx"],
 	"exclude": ["dist", "node_modules", "bunup.config.ts"]
 }

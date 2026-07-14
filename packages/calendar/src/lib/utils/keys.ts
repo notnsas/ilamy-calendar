@@ -98,6 +98,7 @@ export const keys = {
 	resourceGroup: {
 		header: (groupId: Id) => `resource-group-header-${groupId}`,
 		toggle: (groupId: Id) => `resource-group-toggle-${groupId}`,
+		rule: (resourceId: Id) => `resource-group-rule-${resourceId}`,
 	},
 
 	// Generic iteration key composer for React `key=` props, list markers,

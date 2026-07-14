@@ -35,7 +35,12 @@ interface GridProps {
 		close: () => void
 		setSelectedDayEvents: (dayEvents: SelectedDayEvents) => void
 	} | null>
+	isRuleResource?: boolean
 	suppressEventsDialog?: boolean
+	isDialogOpen?: boolean
+	setDialogOpen?: React.Dispatch<React.SetStateAction<boolean>>
+	onRuleClick?: () => void
+	ruleEvents?: CalendarEvent[]
 }
 
 const NoMemoGridCell: React.FC<GridProps> = ({
@@ -53,7 +58,10 @@ const NoMemoGridCell: React.FC<GridProps> = ({
 	children,
 	compact = false,
 	allEventsDialogRef: sharedEventsDialogRef,
+	isRuleResource,
+	onRuleClick,
 	suppressEventsDialog = false,
+	ruleEvents = [],
 }) => {
 	const localAllEventsDialogRef = React.useRef<{
 		open: () => void
@@ -74,6 +82,7 @@ const NoMemoGridCell: React.FC<GridProps> = ({
 		disableCellClick,
 		classesOverride,
 	} = useSmartCalendarContext()
+
 	const effectiveBusinessHours = useEffectiveBusinessHours(
 		compact ? undefined : resourceId
 	)
@@ -82,22 +91,48 @@ const NoMemoGridCell: React.FC<GridProps> = ({
 		if (!shouldRenderEvents) {
 			return []
 		}
+		// // console.log('shouldRenderEvents:', shouldRenderEvents) // Debugging log
+		// // console.log('precomputedEvents:', precomputedEvents) // Debugging log
+		if (isRuleResource && ruleEvents && ruleEvents.length > 0) {
+      const cellStart = day.startOf(gridType)
+      const cellEnd = day.endOf(gridType)
+
+      let filteredRuleEvents = ruleEvents.filter((e) =>
+        e.start.isSameOrBefore(cellEnd) && e.end.isSameOrAfter(cellStart)
+      )
+
+      if (allDay) {
+        filteredRuleEvents = filteredRuleEvents.filter((e) => e.allDay)
+      }
+
+			if (resourceId) {
+				console.log('resourceId in gridcell', resourceId)
+				console.log('filteredRuleEvents in gridcell', filteredRuleEvents)
+				filteredRuleEvents = filteredRuleEvents.filter((e) => e.resourceId === resourceId)
+			}
+
+      return filteredRuleEvents
+    }
 
 		// Use pre-computed events from the row level when available
-		if (precomputedEvents) {
+		if (precomputedEvents && precomputedEvents.length > 0) {
 			return precomputedEvents
 		}
+		// // console.log('precomputedEvents not provided, fetching events for date range') // Debugging log
 
 		let todayEvents = getEventsForDateRange(
 			day.startOf(gridType),
 			day.endOf(gridType)
 		)
+		// // console.log('GridCell todayEvents before filtering:', todayEvents) // Debugging log
 
 		if (allDay) {
 			todayEvents = todayEvents.filter((e) => e.allDay)
 		}
 
 		if (resourceId) {
+			// console.log('GridCell todayEvents after filtering:', todayEvents) // Debugging log
+			// console.log('GridCell filterEventsForResource(todayEvents, resourceId):', filterEventsForResource(todayEvents, resourceId)) // Debugging log
 			return filterEventsForResource(todayEvents, resourceId)
 		}
 
@@ -172,6 +207,13 @@ const NoMemoGridCell: React.FC<GridProps> = ({
 		className
 	)
 
+	// console.log('GridCell ruleEvents:', ruleEvents) // Debugging log
+	if (todayEvents.length > 0) {
+		console.log('GridCell todayEvents:', todayEvents) // Debugging log
+	}
+	// console.log('GridCell day:', day) // Debugging log
+
+	
 	const cellContent = (
 		<div
 			className="flex flex-col h-full w-full"
@@ -185,6 +227,28 @@ const NoMemoGridCell: React.FC<GridProps> = ({
 					dayNumber={day.format('D')}
 					today={isToday(day)}
 				/>
+			)}
+
+			{isRuleResource && todayEvents && todayEvents.length > 0 && (
+				<div className="flex flex-col items-center justify-center w-full h-full min-h-[32px]">
+					{todayEvents.map((event, rowIndex) => {
+						// Extract and convert the 'unknown' type to a string
+						const priceValue = event?.data?.['Price'];
+						const displayPrice = priceValue != null ? String(priceValue) : '';
+
+						return (
+							<div
+								className="w-full shrink-0 flex items-center justify-center"
+								data-testid={event?.title}
+								key={keys.listKey('rule-event', rowIndex, event.id)}
+							>
+								<span className="text-sm">
+									{displayPrice}
+								</span>
+							</div>
+						);
+					})}
+				</div>
 			)}
 
 			{shouldRenderEvents && (
@@ -206,7 +270,6 @@ const NoMemoGridCell: React.FC<GridProps> = ({
 							className="text-muted-foreground hover:text-foreground cursor-pointer text-[10px] whitespace-nowrap sm:text-xs shrink-0 mt-1"
 							onClick={(e) => {
 								e.stopPropagation()
-
 								showAllEvents(day, todayEvents)
 							}}
 							onKeyDown={(e) => {
@@ -228,35 +291,26 @@ const NoMemoGridCell: React.FC<GridProps> = ({
 		</div>
 	)
 
+	// console.log('GridCell resourceId:', resourceId) // Debugging log
+
 	return (
 		<>
-			{useStaticCell ? (
-				// biome-ignore lint/a11y/noStaticElementInteractions: compact cells still create events on click
-				// biome-ignore lint/a11y/useKeyWithClickEvents: matches the grid cell click affordance
-				<div
-					className={cellClassName}
-					data-disabled={cellDisabled.toString()}
-					data-testid={dataTestId || testId}
-					onClick={handleStaticCellClick}
-				>
-					{cellContent}
-				</div>
-			) : (
-				<DroppableCell
-					allDay={allDay}
-					className={cellClassName}
-					data-testid={dataTestId || testId}
-					date={day}
-					disabled={!isBusiness || !isCurrentMonth}
-					hour={hour}
-					id={droppableId}
-					minute={minute}
-					resourceId={resourceId}
-					type="day-cell"
-				>
-					{cellContent}
-				</DroppableCell>
-			)}
+			<DroppableCell
+				allDay={allDay}
+				className={cellClassName}
+				data-testid={dataTestId || testId}
+				date={day}
+				disabled={!isBusiness}
+				hour={hour}
+				id={droppableId}
+				minute={minute}
+				resourceId={resourceId}
+				type="day-cell"
+				isRuleResource={isRuleResource}
+				onRuleClick={onRuleClick}
+			>
+				{cellContent}
+			</DroppableCell>
 
 			{/* Dialog for showing all events */}
 			{!suppressEventsDialog && <AllEventDialog ref={localAllEventsDialogRef} />}
