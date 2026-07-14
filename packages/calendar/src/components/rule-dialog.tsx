@@ -195,7 +195,7 @@ export function RuleDialog({
               {label}
             </Label>
             <div className="flex items-center gap-2">
-              <div className="relative flex items-center flex-1">
+              <div className=" min-w-[220px] relative flex items-center flex-1">
                 {prefix && (
                   <span className="absolute left-3 text-muted-foreground text-sm">
                     {prefix}
