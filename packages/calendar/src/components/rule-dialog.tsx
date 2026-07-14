@@ -167,7 +167,7 @@ export function RuleDialog({
     : ''
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()} modal={false}>
       <DialogContent className="max-w-[480px]">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
@@ -206,7 +206,11 @@ export function RuleDialog({
                 multiple
                 autoHighlight
                 items={roomsInGroup}
-                defaultValue={[roomsInGroup[0]]}
+                value={applyToRooms}
+                onValueChange={(details) => {
+                  console.log('Selected rooms:', details)
+                  setApplyToRooms(details)
+                }}
               >
                 <ComboboxChips ref={anchor} className="w-full max-w-xs">
                   <ComboboxValue>
