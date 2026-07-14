@@ -79,6 +79,7 @@ export interface CalendarDataSlice {
 	) => Resource | undefined
 	isEventCrossResource: (event: CalendarEvent) => boolean
 	getResourceGroupId: () => (string | number)[]
+	getRuleResourceId: (groupId: string | number, title: string) => string | number | undefined
 }
 
 /** Data slice: event store, prop sync, CRUD, and plugin-scoped mutations. */
@@ -248,7 +249,17 @@ export const useCalendarData = ({
 				.filter((groupId): groupId is string => groupId !== undefined)
 			const uniqueGroupIds = [...new Set(resourceGroupIds)]
 			 
+			console.log('resourceGroupIds:', resourceGroupIds) // Debugging log
+			console.log('uniqueGroupIds:', uniqueGroupIds) // Debugging log
+			console.log('resources:', resources) // Debugging log
 			return uniqueGroupIds  
+		},
+		[resources]
+	)
+
+	const getRuleResourceId = useCallback(
+		(groupId: string | number, title: string): string | number | undefined => {
+			return resources.find((resource) => resource.groupId === groupId && resource.title === title)?.id
 		},
 		[resources]
 	)
@@ -272,7 +283,8 @@ export const useCalendarData = ({
 			getEventsForResources,
 			getResourceById,
 			isEventCrossResource,
-			getResourceGroupId
+			getResourceGroupId,
+			getRuleResourceId
 		}),
 		[
 			processedEvents,
@@ -287,7 +299,8 @@ export const useCalendarData = ({
 			getEventsForResources,
 			getResourceById,
 			isEventCrossResource,
-			getResourceGroupId
+			getResourceGroupId,
+			getRuleResourceId
 		]
 	)
 }

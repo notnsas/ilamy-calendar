@@ -71,6 +71,7 @@ export function RuleDialog({
     events,
     getResourceGroupId,
     getResourceById,
+    getRuleResourceId
   } = useSmartCalendarContext((context) => ({
     t: context.t,
     selectedEvent: context.selectedEvent,
@@ -83,6 +84,7 @@ export function RuleDialog({
     events: context.events,
     getResourceGroupId: context.getResourceGroupId,
     getResourceById: context.getResourceById,
+    getRuleResourceId: context.getRuleResourceId,
   }))
 
   if (!selectedEvent) return
@@ -97,14 +99,14 @@ export function RuleDialog({
   const anchor = useComboboxAnchor()
   const roomsInGroup = getResourceGroupId()
 
-
+  
   // Initialize fields when dialog opens
   useEffect(() => {
     if (isOpen && selectedEvent) {
       setValue((selectedEvent.data?.Price as string) || '')
       // Change to YYYY-MM-DD format for the native date picker
       setEndDate(dayjs(selectedEvent.start).format('YYYY-MM-DD'))
-      setApplyToRooms(selectedEvent.resourceId ? [String(selectedEvent.resourceId)] : [])
+      setApplyToRooms([String(getResourceById(selectedEvent.resourceId)?.groupId)])
     }
   }, [isOpen, selectedEvent])
 
@@ -121,30 +123,38 @@ export function RuleDialog({
       const isSelectedDay  = selectedDays.includes(day.day())
       if (!isSelectedDay) continue
 
-      const eventForDay = { 
-        ...selectedEvent,
-        id: `rule-${selectedEvent.resourceId}-${day.startOf('day').valueOf()}`,
-        title: t(`RESOURCE_RULE_EVENT-${selectedEvent.resourceId}`),
-        start: day.startOf('day'),
-        end: day.endOf('day'),
-        data: {
-          ...selectedEvent.data,
-          Price: value,
-          applyTo: applyToRooms, // Adds the applied rooms to the data payload
-        },
-      }
+      for (const groupId of applyToRooms) {
+        const ruleResourceId = getRuleResourceId(groupId, 'Price')
+        if (!ruleResourceId) {
+          console.error(`No rule resource found for groupId: ${groupId}`)
+          continue
+        }
 
-      const isEventValid = (eventForDay && (eventForDay.id !== undefined))
-      if (!isEventValid) {
-        console.error('No selected event to update.')
-        return
-      }
+        const eventForDay = { 
+          ...selectedEvent,
+          id: `rule-${ruleResourceId}-${day.startOf('day').valueOf()}`,
+          title: t(`RESOURCE_RULE_EVENT-${ruleResourceId}`),
+          start: day.startOf('day'),
+          end: day.endOf('day'),
+          resourceId: ruleResourceId,
+          data: {
+            ...selectedEvent.data,
+            Price: value,
+          },
+        }
 
-      const isEventNew = (events.some((e) => e.id === eventForDay.id) === false)
-      if (!isEventNew && isEventValid) {
-        updateEvent(eventForDay.id, eventForDay)
-      } else {
-        addEvent(eventForDay)
+        const isEventValid = (eventForDay && (eventForDay.id !== undefined))
+        if (!isEventValid) {
+          console.error('No selected event to update.')
+          continue
+        }
+
+        const isEventNew = (events.some((e) => e.id === eventForDay.id) === false)
+        if (!isEventNew && isEventValid) {
+          updateEvent(eventForDay.id, eventForDay)
+        } else {
+          addEvent(eventForDay)
+        }
       }
     }
 
@@ -165,6 +175,10 @@ export function RuleDialog({
   const startDateFormatted = selectedEvent?.start
     ? dayjs(selectedEvent.start).format('ddd DD MMM YYYY')
     : ''
+
+  console.log('roomsInGroup:', roomsInGroup)
+  console.log('applyToRooms:', applyToRooms)
+  console.log('selectedEvent.resourceId:', selectedEvent.resourceId)
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()} modal={false}>
@@ -207,9 +221,10 @@ export function RuleDialog({
                 autoHighlight
                 items={roomsInGroup}
                 value={applyToRooms}
+                defaultValue={[roomsInGroup[1]]}
                 onValueChange={(details) => {
                   console.log('Selected rooms:', details)
-                  setApplyToRooms(details)
+                  setApplyToRooms(details.map(detail => String(detail)))
                 }}
               >
                 <ComboboxChips ref={anchor} className="w-full max-w-xs">

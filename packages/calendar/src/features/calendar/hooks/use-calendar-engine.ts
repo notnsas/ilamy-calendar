@@ -261,6 +261,7 @@ export const useCalendarEngine = (
 			getProviders: pluginRuntime.getProviders,
 			getEventResourceIds,
 			getResourceGroupId: data.getResourceGroupId,
+			getRuleResourceId: data.getRuleResourceId,
 		}
 	}, [configSlice, navigation, data, interaction, pluginRuntime])
 }
