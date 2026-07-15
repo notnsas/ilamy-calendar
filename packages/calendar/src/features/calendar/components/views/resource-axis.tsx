@@ -81,22 +81,26 @@ export const buildGroupedResourceRows = (
         })
 
         // Find the engine-provided price resource for this group
-        const enginePriceResource = resources.find(
+        const engineRuleResources = resources.filter(
           (r) => r.groupId === resource.groupId && r.data?.isRuleResource
         )
 
+				console.log('engineRuleResources', engineRuleResources)
+
         // 2. EXACT SAME rule-resource structure as your commented out code
-        if (enginePriceResource) {
-          rows.push({
-            id: keys.resourceGroup.rule(resource.id),
-            rowKind: 'rule-resource',
-            resourceGroup: {
-              id: resource.groupId,
-              title: resource.groupTitle ?? groupKey,
-            },
-            resource: enginePriceResource, // <--- Using the engine resource here
-            columns,
-          })
+        if (engineRuleResources.length > 0) {
+					for (const enginePriceResource of engineRuleResources) {
+						rows.push({
+							id: String(enginePriceResource.id),
+							rowKind: 'rule-resource',
+							resourceGroup: {
+								id: resource.groupId,
+								title: resource.groupTitle ?? groupKey,
+							},
+							resource: enginePriceResource, // <--- Using the engine resource here
+							columns,
+						})
+					}
         }
       }
     }

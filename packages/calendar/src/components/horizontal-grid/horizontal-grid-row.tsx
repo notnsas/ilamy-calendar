@@ -55,8 +55,13 @@ const NoMemoHorizontalGridRow: React.FC<HorizontalGridRowProps> = ({
   }))
   const [isDialogOpen, setDialogOpen] = useState<boolean>(false)
 
+  console.log('HorizontalGridRow resource:', resource) // Debugging log
+
   const isGroupHeader = rowKind === 'group-header' && resourceGroup != null
-  const isRuleResource = rowKind === 'rule-resource'
+
+  const ruleType = resource?.data?.ruleType as string | undefined
+  const isRuleResource = rowKind === 'rule-resource' && ruleType != null
+  
   const isResourceCalendar = variant === 'resource'
   const isYearResourceView = view === 'resourceYear'
   const compact = isYearResourceView && !isGroupHeader
@@ -102,19 +107,21 @@ const NoMemoHorizontalGridRow: React.FC<HorizontalGridRowProps> = ({
           title={resourceGroup.title}
         />
       )}
-      <RuleDialog
-        isOpen={isDialogOpen}
-        onClose={() => setDialogOpen(false)}
-        onSubmit={(val) => {
-          // console.log('Price set to:', val)
-          setDialogOpen(false)
+      {isRuleResource && (
+        <RuleDialog
+          isOpen={isDialogOpen}
+          onClose={() => setDialogOpen(false)}
+          onSubmit={(val) => {
+            // console.log('Price set to:', val)
+            setDialogOpen(false)
         }}
+        ruleType={ruleType}
         title="Set Price"
         description="Enter the rate for this specific date."
         label="Price amount"
         prefix="$"
         placeholder="0.00"
-      />
+      />)}
       {(isResourceCalendar && !isGroupHeader && resource) && (
         <ResourceCell
           className="w-20 sm:w-40 sticky left-0 bg-background z-20 h-[30px]! min-h-[30px]! p-0! overflow-hidden"

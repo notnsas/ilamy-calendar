@@ -44,6 +44,7 @@ interface RuleDialogProps {
   description?: string
   label: string
   placeholder?: string
+  ruleType?: string // e.g., "min-stay", "max-stay", "daily-price", "fixed-price"
   prefix?: string // e.g., "$" or "Rp"
   suffix?: string // e.g., "days" or "nights"
 }
@@ -58,6 +59,7 @@ export function RuleDialog({
   placeholder = '0',
   prefix,
   suffix,
+  ruleType
 }: RuleDialogProps) {
   const {
     t,
@@ -86,8 +88,8 @@ export function RuleDialog({
     getResourceById: context.getResourceById,
     getRuleResourceId: context.getRuleResourceId,
   }))
-
-  if (!selectedEvent) return
+  console.log('selectedEvent in RuleDialog:', selectedEvent)
+  if (!selectedEvent || !ruleType) return
 
   const [value, setValue] = useState('')
   const [endDate, setEndDate] = useState(selectedEvent.end.format('YYYY-MM-DD'))
@@ -99,7 +101,6 @@ export function RuleDialog({
   const anchor = useComboboxAnchor()
   const roomsInGroup = getResourceGroupId()
 
-  
   // Initialize fields when dialog opens
   useEffect(() => {
     if (isOpen && selectedEvent) {
@@ -124,7 +125,7 @@ export function RuleDialog({
       if (!isSelectedDay) continue
 
       for (const groupId of applyToRooms) {
-        const ruleResourceId = getRuleResourceId(groupId, 'Price')
+        const ruleResourceId = getRuleResourceId(groupId, ruleType)
         if (!ruleResourceId) {
           console.error(`No rule resource found for groupId: ${groupId}`)
           continue

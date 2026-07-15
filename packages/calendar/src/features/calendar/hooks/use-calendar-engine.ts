@@ -133,28 +133,37 @@ export const useCalendarEngine = (
 	console.log('Calendar Engine resources:', resources) // Debugging log
 
 	const processedResources = useMemo(() => {
-		const finalResources: Resource[] = [];
-		const seenGroups = new Set<string | number>();
-
+		const finalResources: Resource[] = []
+		const seenGroups = new Set<string | number>()
+		const rulesTitle = {
+			'override': 'Override',
+			'min-stay': 'Min Stay',
+			'max-stay': 'Max Stay',
+			'daily-price': 'Daily Price',
+			'fixed-price': 'Fixed Price',
+			'multiplier': 'Multiplier'
+		}
 		resources?.forEach((resource) => {
 			// 1. FIRST check if it's a new group, and if so, push the Price row BEFORE the room
 			if (resource.groupId && !seenGroups.has(resource.groupId)) {
 				seenGroups.add(resource.groupId);
 				
-				finalResources.push({
-					id: `price-row-${resource.groupId}`,
-					title: 'Price',
-					groupId: resource.groupId,
-					data: { isRuleResource: true } 
-				});
+				for (const rule in rulesTitle) {
+					finalResources.push({
+						id: `${rule}-row-${resource.groupId}`,
+						title: rulesTitle[rule as keyof typeof rulesTitle],
+						groupId: resource.groupId,
+						data: { isRuleResource: true, ruleType: rule } 
+					})
+				}
 			}
 
 			// 2. THEN push the actual room resource AFTER the price row
-			finalResources.push(resource);
+			finalResources.push(resource)
   });
 
-  return finalResources;
-}, [resources]);
+  return finalResources
+}, [resources])
 
 	const { plugins = EMPTY_PLUGINS } = config
 
@@ -248,7 +257,7 @@ export const useCalendarEngine = (
 			...navigationValues
 		} = navigation
 		const { setCurrentEvents: _dataInternal, ...dataValues } = data
-		// console.log('interaction', interaction)
+
 		return {
 			...configValues,
 			...navigationValues,

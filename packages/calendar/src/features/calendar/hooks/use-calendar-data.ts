@@ -258,8 +258,14 @@ export const useCalendarData = ({
 	)
 
 	const getRuleResourceId = useCallback(
-		(groupId: string | number, title: string): string | number | undefined => {
-			return resources.find((resource) => resource.groupId === groupId && resource.title === title)?.id
+		(groupId: string | number, ruleType: string): string | number | undefined => {
+			console.log('getRuleResourceId called with groupId:', groupId, 'ruleType:', ruleType) // Debugging log
+			console.log('resources:', resources) // Debugging log
+			return resources
+				.find((resource) => 
+					resource.groupId === groupId && 
+					resource.data?.ruleType === ruleType)
+						?.id
 		},
 		[resources]
 	)
