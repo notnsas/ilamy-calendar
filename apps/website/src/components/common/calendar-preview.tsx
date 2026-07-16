@@ -6,7 +6,7 @@ import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 // import isSameOrBefore from 'dayjs/plugin/isSameOrBefore.js'
 import timezone from 'dayjs/plugin/timezone.js'
 import utc from 'dayjs/plugin/utc.js'
-import { Card } from '@/components'
+import { Card } from '@/components/ui/card'
 import dummyEvents from '@/lib/seed'
 
 dayjs.extend(isSameOrAfter)

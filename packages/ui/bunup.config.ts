@@ -18,6 +18,7 @@ export default defineConfig({
 		'src/components/select.tsx',
 		'src/components/textarea.tsx',
 		'src/components/tooltip.tsx',
+		'src/components/input-group.tsx',
 		'src/lib/utils.ts',
 	],
 	format: ['esm'],

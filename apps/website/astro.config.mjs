@@ -18,6 +18,9 @@ export default defineConfig({
 			noExternal: ['zod'],
 		},
 		plugins: [tailwindcss(), tsconfigPaths()],
+		build: {
+      minify: true,
+    },
 	},
 
 	integrations: [

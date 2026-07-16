@@ -1,6 +1,6 @@
 import { Moon, Sun } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Button } from '@/components'
+import { Button } from '@/components/ui/button'
 
 type Theme = 'dark' | 'light' | 'system'
 const defaultTheme: Theme = 'dark'

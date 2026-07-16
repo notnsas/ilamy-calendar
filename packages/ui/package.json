@@ -26,6 +26,11 @@
 		"./hooks/*": {
 			"types": "./dist/src/hooks/*.d.ts",
 			"import": "./dist/src/hooks/*.js"
+		},
+		"./components/input-group": {
+			"types": "./dist/src/components/input-group.d.ts",
+			"import": "./dist/src/components/input-group.js",
+			"require": "./dist/src/components/input-group.js"
 		}
 	},
 	"files": [
